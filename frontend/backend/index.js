@@ -4,7 +4,7 @@ import cors from "cors";
 import connectDB from "./utils/connectDB.js";
 import authRoutes from "./routes/auth.js";
 import volunteerRoutes from "./routes/volunteer.js";
-import adminRoutes from "./routes/admin.js";
+
 
 
 dotenv.config();
@@ -23,7 +23,6 @@ app.use("/uploads", express.static("uploads"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/volunteer", volunteerRoutes);
-app.use("/api/admin", adminRoutes);
 
 // Test route
 app.get("/", (req, res) => {

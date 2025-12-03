@@ -83,17 +83,9 @@ export default function WeeklyReport({ user }) {
       subject,
       weekStart: startDate,
       weekEnd: getWeekDates(startDate)[6],
-
-      // FIXED FORMAT
-      reportData: weeklyData.map(d => ({
-        date: d.date,
-        presentCount: d.present,
-        absentCount: d.absent,
-      })),
-
+      reportData: weeklyData,
       assignments,
     };
-
 
     console.log("📤 Submitting:", payload);
 

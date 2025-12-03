@@ -280,69 +280,13 @@ router.get("/weekly-assignments", async (req, res) => {
 
 router.post("/weekly-report", async (req, res) => {
   try {
-    console.log("📩 Weekly report received:", req.body);
-
-    const {
-      volunteerId,
-      level,
-      subject,
-      weekStart,
-      weekEnd,
-      reportData,
-      assignments,
-    } = req.body;
-
-    // Validate required fields
-    if (!volunteerId || !level || !subject || !weekStart || !weekEnd) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
-    }
-
-    // Ensure reportData is in correct format
-    const formattedReportData = (reportData || []).map((d) => ({
-      date: d.date,
-      presentCount: d.presentCount ?? 0,
-      absentCount: d.absentCount ?? 0,
-    }));
-
-    // Ensure assignments is formatted properly
-    const formattedAssignments = (assignments || []).map((a) => ({
-      name: a.name,
-      date: a.date,
-    }));
-
-    // SAVE IN MONGODB
-    const saved = await WeeklyReport.create({
-      volunteerId,
-      level,
-      subject,
-      weekStart,
-      weekEnd,
-      reportData: formattedReportData,
-      assignments: formattedAssignments,
-    });
-
-    console.log("✅ Weekly report saved:", saved);
-
-    return res.json({
-      success: true,
-      message: "Weekly report saved successfully",
-      data: saved,
-    });
-
+    const saved = await WeeklyReport.create(req.body);
+    res.json({ success: true, message: "Weekly report submitted!", saved });
   } catch (err) {
-    console.error("❌ Weekly report DB error:", err);
-
-    return res.status(500).json({
-      success: false,
-      message: "Error saving weekly report",
-      error: err.message,
-    });
+    console.log(err);
+    res.status(500).json({ success: false, message: "Error saving report" });
   }
 });
-
 
 
 export default router;

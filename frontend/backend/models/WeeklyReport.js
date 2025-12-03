@@ -4,25 +4,11 @@ const WeeklyReportSchema = new mongoose.Schema({
   volunteerId: String,
   level: Number,
   subject: String,
-
-  weekStart: String,
+  weekStart: String,   // YYYY-MM-DD
   weekEnd: String,
 
-  // <-- Updated Structure
-  reportData: [
-    {
-      date: String,
-      presentCount: Number,
-      absentCount: Number
-    }
-  ],
-
-  assignments: [
-    {
-      name: String,
-      date: String
-    }
-  ],
+  reportData: Array,   // [{date, present, absent}]
+  assignments: Array,  // [{name, date}]
 
   createdAt: { type: Date, default: Date.now }
 });
