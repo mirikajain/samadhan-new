@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 export default function Assignment({ user }) {
   // ▌ Ensure fallback user fields
@@ -17,7 +17,7 @@ export default function Assignment({ user }) {
   const API = "http://localhost:5000";
 
   // ▌ State for assignment
-  const [selectedLevel, setSelectedLevel] = useState("");  
+  const [selectedLevel, setSelectedLevel] = useState("");
   const [subject, setSubject] = useState("");
   const [assignmentName, setAssignmentName] = useState("");
   const [mcqs, setMcqs] = useState([]);
@@ -32,14 +32,13 @@ export default function Assignment({ user }) {
     correct: "",
   });
 
-  // Add MCQ to list
+  // Add MCQ
   const addMcq = () => {
     if (!mcqForm.question || !mcqForm.correct)
-      return alert("Please fill the question and correct answer.");
+      return alert("Please enter question & correct answer!");
 
     setMcqs([...mcqs, mcqForm]);
 
-    // Reset MCQ form
     setMcqForm({
       question: "",
       optionA: "",
@@ -65,8 +64,6 @@ export default function Assignment({ user }) {
       mcqs,
     };
 
-    console.log("📤 Submitting assignment:", payload);
-
     try {
       const res = await fetch(`${API}/api/volunteer/assignment`, {
         method: "POST",
@@ -77,7 +74,6 @@ export default function Assignment({ user }) {
       const data = await res.json();
       alert(data.message || "Assignment created!");
 
-      // Reset Assignment
       setAssignmentName("");
       setMcqs([]);
       setSelectedLevel("");
@@ -89,163 +85,176 @@ export default function Assignment({ user }) {
   };
 
   return (
-    <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 mt-6">
-      <h2 className="text-2xl font-bold text-blue-700 mb-4">
-        Create Assignment
-      </h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
 
-      <p className="text-sm text-gray-600 mb-4">
-        Logged in as <strong>{user.username}</strong> ({user.role})
-      </p>
+      {/* MAIN CONTAINER */}
+      <div className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-blue-200 max-w-5xl mx-auto transition-all">
 
-      {/* Filters */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
+        <h2 className="text-4xl font-extrabold bg-gradient-to-r from-blue-700 to-purple-600 bg-clip-text text-transparent mb-3">
+          Create Assignment ✏️
+        </h2>
 
-        {/* Level Selector */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Level</label>
-          <select
-            value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          >
-            <option value="">Select Level</option>
-            {user.levels.map((lvl) => (
-              <option key={lvl} value={lvl}>
-                Level {lvl}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Subject Selector */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Subject</label>
-          <select
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          >
-            <option value="">Select Subject</option>
-            {user.subjects.map((sub, i) => (
-              <option key={i} value={sub}>
-                {sub}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Assignment Name */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Assignment Name
-          </label>
-          <input
-            type="text"
-            value={assignmentName}
-            onChange={(e) => setAssignmentName(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-            placeholder="Ex: Chapter 3 - Fractions Quiz"
-          />
-        </div>
-      </div>
-
-      {/* MCQ Form */}
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Question</label>
-          <textarea
-            value={mcqForm.question}
-            onChange={(e) =>
-              setMcqForm({ ...mcqForm, question: e.target.value })
-            }
-            className="w-full border rounded-lg px-3 py-2"
-            placeholder="Enter question..."
-          />
-        </div>
-
-        {/* Options */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {["A", "B", "C", "D"].map((opt) => (
-            <div key={opt}>
-              <label className="block text-sm font-medium mb-1">
-                Option {opt}
-              </label>
-              <input
-                type="text"
-                value={mcqForm[`option${opt}`]}
-                onChange={(e) =>
-                  setMcqForm({ ...mcqForm, [`option${opt}`]: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Correct Answer */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Correct Answer (A/B/C/D)
-          </label>
-          <input
-            type="text"
-            value={mcqForm.correct}
-            onChange={(e) =>
-              setMcqForm({ ...mcqForm, correct: e.target.value.toUpperCase() })
-            }
-            className="w-full border rounded-lg px-3 py-2"
-          />
-        </div>
-
-        {/* Add MCQ Button */}
-        <div className="flex justify-end">
-          <button
-            onClick={addMcq}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Add MCQ
-          </button>
-        </div>
-      </div>
-
-      {/* MCQ Table */}
-      {mcqs.length > 0 ? (
-        <table className="w-full border text-sm mt-4">
-          <thead className="bg-gray-100 text-gray-700">
-            <tr>
-              <th className="p-2 border">Question</th>
-              <th className="p-2 border text-center">Correct</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mcqs.map((q, i) => (
-              <tr key={i} className="border-b">
-                <td className="p-2 border">{q.question}</td>
-                <td className="p-2 border text-center font-semibold">
-                  {q.correct}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className="text-center text-gray-600 mt-4">
-          No MCQs added yet. Add questions above.
+        <p className="text-sm text-gray-600 mb-6">
+          Logged in as <strong>{user.username}</strong> ({user.role})
         </p>
-      )}
 
-      {/* Submit Assignment */}
-      {mcqs.length > 0 && (
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={submitAssignment}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
-          >
-            Submit Assignment
-          </button>
+        {/* ================= Filters ================= */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          
+          {/* Level */}
+          <div>
+            <label className="block text-sm font-semibold text-blue-700">Level</label>
+            <select
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300"
+            >
+              <option value="">Select Level</option>
+              {user.levels.map((lvl) => (
+                <option key={lvl} value={lvl}>Level {lvl}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="block text-sm font-semibold text-blue-700">Subject</label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300"
+            >
+              <option value="">Select Subject</option>
+              {user.subjects.map((sub, i) => (
+                <option key={i} value={sub}>{sub}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Assignment Name */}
+          <div>
+            <label className="block text-sm font-semibold text-blue-700">Assignment Title</label>
+            <input
+              type="text"
+              value={assignmentName}
+              onChange={(e) => setAssignmentName(e.target.value)}
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300"
+              placeholder="Ex: Fractions Quiz - Chapter 3"
+            />
+          </div>
         </div>
-      )}
+
+
+        {/* ================= MCQ ENTRY BOX ================= */}
+        <div className="bg-white shadow-lg rounded-2xl border border-gray-200 p-6 transition hover:shadow-xl">
+
+          <h3 className="text-2xl font-bold text-blue-700 mb-4">Add MCQ Question</h3>
+
+          {/* Question */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold mb-1 text-gray-600">Question</label>
+            <textarea
+              value={mcqForm.question}
+              onChange={(e) => setMcqForm({ ...mcqForm, question: e.target.value })}
+              className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-300"
+              placeholder="Type the question here..."
+            />
+          </div>
+
+          {/* Options */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {["A", "B", "C", "D"].map((opt) => (
+              <div key={opt}>
+                <label className="block text-sm font-semibold mb-1">
+                  Option {opt}
+                </label>
+                <input
+                  type="text"
+                  value={mcqForm[`option${opt}`]}
+                  onChange={(e) =>
+                    setMcqForm({ ...mcqForm, [`option${opt}`]: e.target.value })
+                  }
+                  className="w-full border border-gray-300 bg-gray-50 px-3 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-300"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Correct Answer */}
+          <div className="mt-4">
+            <label className="block text-sm font-semibold mb-1 text-green-700">
+              Correct Answer (A/B/C/D)
+            </label>
+            <input
+              type="text"
+              value={mcqForm.correct}
+              onChange={(e) => setMcqForm({ ...mcqForm, correct: e.target.value.toUpperCase() })}
+              className="w-full border border-green-300 bg-green-50 px-3 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-green-300"
+            />
+          </div>
+
+          {/* Add MCQ Button */}
+          <div className="flex justify-end mt-5">
+            <button
+              onClick={addMcq}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition"
+            >
+              ➕ Add Question
+            </button>
+          </div>
+        </div>
+
+
+        {/* ================= PREVIEW MCQs ================= */}
+        {mcqs.length > 0 && (
+          <div className="mt-10">
+            
+            <h3 className="text-2xl font-semibold mb-4 text-gray-800">Preview Questions</h3>
+
+            <div className="space-y-5">
+              {mcqs.map((q, i) => (
+                <div
+                  key={i}
+                  className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-blue-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1"
+                >
+                  <p className="font-bold text-blue-900 text-lg">
+                    Q{i + 1}: {q.question}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                    {["A", "B", "C", "D"].map((opt) => (
+                      <span
+                        key={opt}
+                        className={`px-3 py-2 rounded-xl border shadow-sm ${
+                          q.correct === opt
+                            ? "bg-green-200 text-green-800 border-green-400"
+                            : "bg-white"
+                        }`}
+                      >
+                        {opt}: {q[`option${opt}`]}
+                      </span>
+                    ))}
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+        {/* ================= SUBMIT BUTTON ================= */}
+        {mcqs.length > 0 && (
+          <div className="flex justify-end mt-10">
+            <button
+              onClick={submitAssignment}
+              className="bg-gradient-to-r from-green-500 to-green-600 text-white px-10 py-3 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition"
+            >
+              📤 Submit Assignment
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

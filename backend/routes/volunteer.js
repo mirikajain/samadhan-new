@@ -210,7 +210,8 @@ router.post("/upload-material", upload.single("file"), async (req, res) => {
   }
 });
 
-// 🟩 WEEKLY ATTENDANCE SUMMARY
+
+// 🟩 WEEKLY ATTENDANCE SUMMARY (WITH TOPPER + WEAK STUDENTS)
 router.get("/weekly-attendance", async (req, res) => {
   try {
     const { level, subject, dates } = req.query;
@@ -220,8 +221,10 @@ router.get("/weekly-attendance", async (req, res) => {
 
     const weekDates = JSON.parse(dates); // array of 7 dates YYYY-MM-DD
 
-    const weekly = [];
+    let weekly = [];
+    let studentMap = {}; // track each student's attendance counts
 
+    // Collect daily records
     for (let date of weekDates) {
       const dayRecords = await Attendance.find({ level, subject, date });
 
@@ -230,21 +233,72 @@ router.get("/weekly-attendance", async (req, res) => {
 
       dayRecords.forEach((att) => {
         att.records.forEach((r) => {
-          if (r.status === "Present") present++;
-          else absent++;
+          if (!studentMap[r.studentId]) {
+            studentMap[r.studentId] = {
+              name: r.name,
+              present: 0,
+              absent: 0,
+            };
+          }
+
+          if (r.status === "Present") {
+            present++;
+            studentMap[r.studentId].present++;
+          } else {
+            absent++;
+            studentMap[r.studentId].absent++;
+          }
         });
       });
 
       weekly.push({ date, present, absent });
     }
 
-    res.json({ success: true, weekly });
+    // ------------------------------------------------
+    //  CALCULATE TOPPER + WEAK STUDENTS
+    // ------------------------------------------------
+    let topper = null;
+    let weakStudents = [];
+
+    Object.entries(studentMap).forEach(([studentId, s]) => {
+      const total = s.present + s.absent;
+      const attendancePercent = total > 0 ? Math.round((s.present / total) * 100) : 0;
+
+      // topper = highest percentage
+      if (!topper || attendancePercent > topper.score) {
+        topper = {
+          studentId,
+          name: s.name,
+          score: attendancePercent,
+        };
+      }
+
+      // weak student: < 50% OR absent more than 3 times
+      if (attendancePercent < 50 || s.absent >= 3) {
+        weakStudents.push({
+          studentId,
+          name: s.name,
+          reason:
+            attendancePercent < 50
+              ? `Low attendance (${attendancePercent}%)`
+              : `Absent ${s.absent} days`,
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      weekly,
+      topper,
+      weakStudents,
+    });
 
   } catch (err) {
     console.log("❌ Weekly Attendance Error:", err);
     res.status(500).json({ success: false });
   }
 });
+
 
 // 🟦 WEEKLY ASSIGNMENTS SUMMARY
 router.get("/weekly-assignments", async (req, res) => {
@@ -290,6 +344,8 @@ router.post("/weekly-report", async (req, res) => {
       weekEnd,
       reportData,
       assignments,
+      topperStudent,
+      weakStudents,
     } = req.body;
 
     // Validate required fields
@@ -300,20 +356,19 @@ router.post("/weekly-report", async (req, res) => {
       });
     }
 
-    // Ensure reportData is in correct format
+    // Ensure proper formatting
     const formattedReportData = (reportData || []).map((d) => ({
       date: d.date,
       presentCount: d.presentCount ?? 0,
       absentCount: d.absentCount ?? 0,
     }));
 
-    // Ensure assignments is formatted properly
     const formattedAssignments = (assignments || []).map((a) => ({
       name: a.name,
       date: a.date,
     }));
 
-    // SAVE IN MONGODB
+    // SAVE TO MONGO
     const saved = await WeeklyReport.create({
       volunteerId,
       level,
@@ -322,6 +377,8 @@ router.post("/weekly-report", async (req, res) => {
       weekEnd,
       reportData: formattedReportData,
       assignments: formattedAssignments,
+      topperStudent: topperStudent || null,
+      weakStudents: weakStudents || [],
     });
 
     console.log("✅ Weekly report saved:", saved);
@@ -342,7 +399,6 @@ router.post("/weekly-report", async (req, res) => {
     });
   }
 });
-
 
 
 export default router;

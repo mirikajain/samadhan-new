@@ -1,6 +1,7 @@
 import express from "express";
 import Student from "../models/Student.js";
 import Volunteer from "../models/Volunteer.js";
+import Donation from "../models/Donation.js";
 
 const router = express.Router();
 
@@ -29,23 +30,36 @@ router.post("/add-student", async (req, res) => {
 // ADD VOLUNTEER
 router.post("/add-volunteer", async (req, res) => {
   try {
-    const { name, email, centreId, phone } = req.body;
+    const { name, email, centreId, phone, level, subjects } = req.body;
 
+    // Validation
+    if (!name || !email || !centreId || !phone || !level || !subjects) {
+      return res.status(400).json({ message: "Please fill all fields." });
+    }
+
+    // Create volunteer
     const volunteer = new Volunteer({
       name,
       email,
       centreId,
       phone,
+      level,       // NEW
+      subjects,    // NEW (Array of subjects)
     });
 
     await volunteer.save();
 
-    res.json({ message: "Volunteer added successfully!", volunteer });
+    res.json({
+      message: "Volunteer added successfully!",
+      volunteer,
+    });
+
   } catch (err) {
     console.error("Error adding volunteer:", err);
     res.status(500).json({ message: "Failed to add volunteer" });
   }
 });
+
 
 import WeeklyReport from "../models/WeeklyReport.js";
 
@@ -64,8 +78,6 @@ router.get("/weekly-attendance-db", async (req, res) => {
     endDateObj.setDate(endDateObj.getDate() + 6);
     const end = endDateObj.toISOString().split("T")[0];
 
-    console.log("Searching DB report:", { level, subject, start, end });
-
     const report = await WeeklyReport.findOne({
       level: Number(level),
       subject: { $regex: new RegExp(`^${subject}$`, "i") },
@@ -73,22 +85,38 @@ router.get("/weekly-attendance-db", async (req, res) => {
       weekEnd: end,
     });
 
-    console.log("DB Result:", report);
-
     if (!report) {
       return res.json({ success: false, weekly: [] });
     }
 
-    // ⭐ FIXED: Use correct DB fields
-    const formatted = report.reportData.map((d) => ({
+    // Convert attendance format for chart/table
+    const formattedWeekly = report.reportData.map((d) => ({
       date: d.date,
       present: d.presentCount,
       absent: d.absentCount,
     }));
-    console.log("DB Result:", report);
 
+    return res.json({
+      success: true,
 
-    return res.json({ success: true, weekly: formatted });
+      // 🔹 Attendance Table + Chart
+      weekly: formattedWeekly,
+
+      // 🔹 Assignments List
+      assignments: report.assignments || [],
+
+      // 🔹 Topper
+      topperStudent: report.topperStudent || null,
+
+      // 🔹 Weak Students
+      weakStudents: report.weakStudents || [],
+
+      // 🔹 Volunteer who submitted
+      volunteerId: report.volunteerId || null,
+
+      // (optional: return full report for debugging)
+      fullReport: report,
+    });
 
   } catch (err) {
     console.error("Weekly Report DB Error:", err);
@@ -96,4 +124,71 @@ router.get("/weekly-attendance-db", async (req, res) => {
   }
 });
 
+router.post("/filter-donations", async (req, res) => {
+  try {
+    const { filterType, date, month, year } = req.body;
+
+    let query = {};
+
+    // ------------------------
+    // FILTER: BY DATE
+    // ------------------------
+    if (filterType === "date") {
+      if (!date) {
+        return res.json({ success: false, message: "Date required" });
+      }
+
+      const selectedDate = new Date(date);
+      const nextDate = new Date(selectedDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      query.date = { $gte: selectedDate, $lt: nextDate };
+    }
+
+    // ------------------------
+    // FILTER: BY MONTH
+    // ------------------------
+    else if (filterType === "month") {
+      if (!month || !year) {
+        return res.json({ success: false, message: "Month and Year required" });
+      }
+
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 1); // next month
+
+      query.date = { $gte: start, $lt: end };
+    }
+
+    // ------------------------
+    // FILTER: BY YEAR
+    // ------------------------
+    else if (filterType === "year") {
+      if (!year) {
+        return res.json({ success: false, message: "Year required" });
+      }
+
+      const start = new Date(year, 0, 1);
+      const end = new Date(year + 1, 0, 1);
+
+      query.date = { $gte: start, $lt: end };
+    }
+
+    else {
+      return res.json({ success: false, message: "Invalid filterType" });
+    }
+
+    // Fetch donations
+    const donations = await Donation.find(query).sort({ date: -1 });
+
+    if (donations.length === 0) {
+      return res.json({ success: false, donations: [] });
+    }
+
+    return res.json({ success: true, donations });
+
+  } catch (error) {
+    console.error("Filter Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
 export default router;

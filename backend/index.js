@@ -5,7 +5,7 @@ import connectDB from "./utils/connectDB.js";
 import authRoutes from "./routes/auth.js";
 import volunteerRoutes from "./routes/volunteer.js";
 import adminRoutes from "./routes/admin.js";
-
+import donorRoutes from "./routes/donor.js"
 
 dotenv.config();
 const app = express();
@@ -24,6 +24,8 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/donor", donorRoutes);
+
 
 // Test route
 app.get("/", (req, res) => {

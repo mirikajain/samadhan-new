@@ -1,4 +1,13 @@
 import React, { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export default function WeeklyReport({ user }) {
   // fallback user
@@ -18,13 +27,15 @@ export default function WeeklyReport({ user }) {
   const [subject, setSubject] = useState("");
   const [startDate, setStartDate] = useState("");
 
-  // results
+  // results from backend
   const [weeklyData, setWeeklyData] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [topperStudent, setTopperStudent] = useState(null);
+  const [weakStudents, setWeakStudents] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
-  // generate week array
+  // Generate week dates
   const getWeekDates = (start) => {
     const base = new Date(start);
     const list = [];
@@ -45,7 +56,6 @@ export default function WeeklyReport({ user }) {
     const dates = getWeekDates(startDate);
 
     try {
-      // attendance
       const aRes = await fetch(
         `${API}/api/volunteer/weekly-attendance?level=${level}&subject=${subject}&dates=${JSON.stringify(
           dates
@@ -53,7 +63,6 @@ export default function WeeklyReport({ user }) {
       );
       const attendanceData = await aRes.json();
 
-      // assignments
       const asRes = await fetch(
         `${API}/api/volunteer/weekly-assignments?level=${level}&subject=${subject}&dates=${JSON.stringify(
           dates
@@ -63,6 +72,10 @@ export default function WeeklyReport({ user }) {
 
       setWeeklyData(attendanceData.weekly);
       setAssignments(assignmentData.assignments);
+
+      // New fields returned from backend
+      setTopperStudent(attendanceData.topper || null);
+      setWeakStudents(attendanceData.weakStudents || []);
 
     } catch (err) {
       console.error(err);
@@ -84,18 +97,16 @@ export default function WeeklyReport({ user }) {
       weekStart: startDate,
       weekEnd: getWeekDates(startDate)[6],
 
-      // FIXED FORMAT
-      reportData: weeklyData.map(d => ({
+      reportData: weeklyData.map((d) => ({
         date: d.date,
-        presentCount: d.present,
-        absentCount: d.absent,
+        presentCount: d.present ?? 0,
+        absentCount: d.absent ?? 0,
       })),
 
       assignments,
+      topperStudent,
+      weakStudents,
     };
-
-
-    console.log("📤 Submitting:", payload);
 
     try {
       const res = await fetch(`${API}/api/volunteer/weekly-report`, {
@@ -107,10 +118,13 @@ export default function WeeklyReport({ user }) {
       const data = await res.json();
       alert(data.message);
 
+      // Reset UI
       setWeeklyData([]);
       setAssignments([]);
-      setStartDate("");
+      setWeakStudents([]);
+      setTopperStudent(null);
       setSubject("");
+      setStartDate("");
 
     } catch (err) {
       console.error("❌ Submit error:", err);
@@ -118,124 +132,259 @@ export default function WeeklyReport({ user }) {
     }
   };
 
+  // Calculate attendance %
+  const averageAttendance =
+    weeklyData.length > 0
+      ? Math.round(
+          (weeklyData.reduce((a, b) => a + b.present, 0) /
+            weeklyData.reduce((a, b) => a + (b.present + b.absent), 0)) * 100
+        )
+      : 0;
+
   return (
-    <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200 mt-6">
-      <h2 className="text-2xl font-bold text-blue-700 mb-4">
-        Weekly Report Dashboard
-      </h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+      <div className="bg-white shadow-xl rounded-2xl p-8 border border-blue-200 max-w-6xl mx-auto">
 
-      <p className="text-sm text-gray-600 mb-4">
-        Logged in as <strong>{user.username}</strong>
-      </p>
+        <h2 className="text-3xl font-bold text-blue-700 mb-4">
+          Weekly Report Dashboard
+        </h2>
 
-      {/* Filters */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Level</label>
-          <select
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          >
-            <option value="">Select Level</option>
-            {[1, 2, 3, 4, 5].map((lvl) => (
-              <option value={lvl} key={lvl}>
-                Level {lvl}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Subject</label>
-          <select
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          >
-            <option value="">Select Subject</option>
-            {user.subjects.map((sub) => (
-              <option key={sub} value={sub}>
-                {sub}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Week Start Date
-          </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          />
-        </div>
-      </div>
-
-      {/* Generate Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={fetchWeekly}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          {loading ? "Loading..." : "Generate Weekly Report"}
-        </button>
-      </div>
-
-      {/* Weekly Attendance */}
-      {weeklyData.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xl font-bold mb-2">Attendance Summary</h3>
-
-          <table className="w-full border text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border p-2">Date</th>
-                <th className="border p-2">Present</th>
-                <th className="border p-2">Absent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weeklyData.map((d) => (
-                <tr key={d.date}>
-                  <td className="border p-2">{d.date}</td>
-                  <td className="border p-2 text-green-700 font-bold">{d.present}</td>
-                  <td className="border p-2 text-red-600 font-bold">{d.absent}</td>
-                </tr>
+        {/* ---------------- FILTERS ---------------- */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          
+          {/* Level */}
+          <div>
+            <label className="block text-sm font-medium text-blue-800 mb-1">
+              Level
+            </label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="w-full border bg-blue-50 border-blue-200 rounded-lg px-3 py-2"
+            >
+              <option value="">Select Level</option>
+              {[1, 2, 3, 4, 5].map((lvl) => (
+                <option value={lvl} key={lvl}>
+                  Level {lvl}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </select>
+          </div>
 
-      {/* Assignments */}
-      {assignments.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xl font-bold mb-2">Assignments Given</h3>
-          <ul className="list-disc ml-6 text-sm">
-            {assignments.map((a, i) => (
-              <li key={i}>
-                <strong>{a.name}</strong> — {a.date}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+          {/* Subject */}
+          <div>
+            <label className="block text-sm font-medium text-blue-800 mb-1">
+              Subject
+            </label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full border bg-blue-50 border-blue-200 rounded-lg px-3 py-2"
+            >
+              <option value="">Select Subject</option>
+              {user.subjects.map((sub, i) => (
+                <option key={i} value={sub}>{sub}</option>
+              ))}
+            </select>
+          </div>
 
-      {/* Submit Button */}
-      {weeklyData.length > 0 && (
-        <div className="flex justify-end mt-6">
+          {/* Week Start */}
+          <div>
+            <label className="block text-sm font-medium text-blue-800 mb-1">
+              Week Start Date
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full border bg-blue-50 border-blue-200 rounded-lg px-3 py-2"
+            />
+          </div>
+        </div>
+
+        {/* Generate Button */}
+        <div className="flex justify-end">
           <button
-            onClick={handleSubmitReport}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+            onClick={fetchWeekly}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow"
           >
-            Submit Weekly Report
+            {loading ? "Loading..." : "Generate Weekly Report"}
           </button>
         </div>
-      )}
+
+        {/* ---------------- SUMMARY CARDS ---------------- */}
+        {weeklyData.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+
+            <div className="p-5 bg-green-100 rounded-xl shadow">
+              <h3 className="text-lg font-semibold text-green-700">
+                Avg Attendance %
+              </h3>
+              <p className="text-4xl font-bold text-green-700 mt-2">
+                {averageAttendance}%
+              </p>
+            </div>
+
+            <div className="p-5 bg-purple-100 rounded-xl shadow">
+              <h3 className="text-lg font-semibold text-purple-700">
+                Assignments Uploaded
+              </h3>
+              <p className="text-4xl font-bold text-purple-700 mt-2">
+                {assignments.length}
+              </p>
+            </div>
+
+            <div className="p-5 bg-blue-100 rounded-xl shadow">
+              <h3 className="text-lg font-semibold text-blue-700">
+                Topper Score
+              </h3>
+              <p className="text-4xl font-bold text-blue-700 mt-2">
+                {topperStudent?.score ?? "--"}%
+              </p>
+            </div>
+
+            <div className="p-5 bg-red-100 rounded-xl shadow">
+              <h3 className="text-lg font-semibold text-red-700">
+                Weak Students
+              </h3>
+              <p className="text-4xl font-bold text-red-700 mt-2">
+                {weakStudents.length}
+              </p>
+            </div>
+
+          </div>
+        )}
+
+        {/* ---------------- CHART ---------------- */}
+        {weeklyData.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-2xl font-bold text-blue-700 mb-3">
+              📊 Weekly Attendance Overview
+            </h3>
+
+            <div className="w-full h-64 bg-white p-4 rounded-xl shadow border">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="present" fill="#4ade80" />
+                  <Bar dataKey="absent" fill="#f87171" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- TABLE ---------------- */}
+        {weeklyData.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-bold mb-2">Daily Attendance Summary</h3>
+
+            <table className="w-full border text-sm bg-white shadow rounded-lg overflow-hidden">
+              <thead className="bg-blue-100 text-blue-900">
+                <tr>
+                  <th className="border p-2">Date</th>
+                  <th className="border p-2">Present</th>
+                  <th className="border p-2">Absent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeklyData.map((d) => (
+                  <tr key={d.date} className="hover:bg-blue-50">
+                    <td className="border p-2">{d.date}</td>
+                    <td className="border p-2 text-green-700 font-bold">{d.present}</td>
+                    <td className="border p-2 text-red-600 font-bold">{d.absent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ---------------- ASSIGNMENTS ---------------- */}
+        {assignments.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-bold text-purple-700 mb-3">
+              Assignments Uploaded
+            </h3>
+
+            <ul className="space-y-3">
+              {assignments.map((a, i) => (
+                <li
+                  key={i}
+                  className="p-4 bg-purple-50 border-l-4 border-purple-400 rounded shadow"
+                >
+                  <strong>{a.name}</strong> — {a.date}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* ---------------- TOPPER STUDENT ---------------- */}
+        {topperStudent && (
+          <div className="mt-10">
+            <h3 className="text-xl font-bold text-green-700 mb-3">
+              🏆 Student of the Week
+            </h3>
+
+            <div className="p-5 rounded-2xl bg-green-100 shadow border border-green-300 max-w-md">
+              <p className="text-lg font-semibold text-green-900">
+                {topperStudent.name}
+              </p>
+              <p className="text-sm text-green-800 mt-1">
+                ID: <strong>{topperStudent.studentId}</strong>
+              </p>
+              <p className="text-sm text-green-800 mt-1">
+                Score: <strong>{topperStudent.score}%</strong>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- WEAK STUDENTS ---------------- */}
+        {weakStudents.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-bold text-red-700 mb-3">
+              ⚠️ Weak Students
+            </h3>
+
+            <ul className="space-y-2">
+              {weakStudents.map((s, i) => (
+                <li
+                  key={i}
+                  className="p-3 bg-red-50 border border-red-200 rounded-xl shadow text-red-800 font-semibold"
+                >
+                  {s.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* ---------------- EXPORT + SHARE ---------------- */}
+        {weeklyData.length > 0 && (
+          <div className="flex justify-end gap-4 mt-10">
+
+            <button
+              onClick={() => window.print()}
+              className="px-6 py-2 rounded-lg bg-blue-200 text-blue-800 font-medium shadow hover:bg-blue-300"
+            >
+              ⬇️ Export as PDF
+            </button>
+
+            <button
+              onClick={handleSubmitReport}
+              className="px-6 py-2 rounded-lg bg-green-500 text-white font-medium shadow hover:bg-green-600"
+            >
+              📤 Share to Admin
+            </button>
+
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ const WeeklyReportSchema = new mongoose.Schema({
   weekStart: String,
   weekEnd: String,
 
-  // <-- Updated Structure
+  // Attendance records
   reportData: [
     {
       date: String,
@@ -17,10 +17,27 @@ const WeeklyReportSchema = new mongoose.Schema({
     }
   ],
 
+  // Assignments
   assignments: [
     {
       name: String,
       date: String
+    }
+  ],
+
+  // ⭐ NEW: Topper student (only 1)
+  topperStudent: {
+    name: String,
+    score: Number,       // or percentage
+    studentId: String
+  },
+
+  // ⭐ NEW: Weak students list
+  weakStudents: [
+    {
+      name: String,
+      reason: String,    // e.g., “Low attendance”, “No assignment”, etc.
+      studentId: String
     }
   ],
 
