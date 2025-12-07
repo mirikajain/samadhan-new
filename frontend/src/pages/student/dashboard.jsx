@@ -23,7 +23,7 @@ export default function StudentDashboard() {
   const [overall, setOverall] = useState({ present: 0, total: 0 });
 
   // Weekly Performance
-  const [weeklyReport, setWeeklyReport] = useState(null);
+  const [, setWeeklyReport] = useState(null);
   const [performanceStatus, setPerformanceStatus] = useState("");
 
   // FETCH ATTENDANCE + WEEKLY REPORT

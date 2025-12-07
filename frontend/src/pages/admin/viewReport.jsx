@@ -9,7 +9,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-export default function viewReport() {
+export default function ViewReport() {
   const [filters, setFilters] = useState({
     level: "",
     subject: "",
@@ -20,7 +20,7 @@ export default function viewReport() {
   const [assignments, setAssignments] = useState([]);
   const [topper, setTopper] = useState(null);
   const [weakStudents, setWeakStudents] = useState([]);
-  const [volunteerId, setVolunteerId] = useState("");
+  const [, setVolunteerId] = useState("");
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
