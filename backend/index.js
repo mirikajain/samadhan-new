@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import volunteerRoutes from "./routes/volunteer.js";
 import adminRoutes from "./routes/admin.js";
 import donorRoutes from "./routes/donor.js"
+import studentRoutes from "./routes/student.js";
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/donor", donorRoutes);
+app.use("/api/student", studentRoutes);
 
 
 // Test route

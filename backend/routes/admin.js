@@ -1,7 +1,7 @@
 import express from "express";
-import Student from "../models/Student.js";
-import Volunteer from "../models/Volunteer.js";
+import bcrypt from "bcryptjs";
 import Donation from "../models/Donation.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -9,16 +9,30 @@ router.post("/add-student", async (req, res) => {
   try {
     const { name, centreId, level, subjects } = req.body;
 
-    const student = new Student({
-      name,
+    // Auto-generate password for the student
+    const generatedPassword = name.toLowerCase().replace(/\s+/g, "") + "123";
+    const hashed = await bcrypt.hash(generatedPassword, 10);
+
+    const studentUser = new User({
+      username: name,
+      password: hashed,
+      role: "student",
       centreId,
-      level,
-      subjects,
+      levels: [Number(level)],     // convert level -> levels[]
+      subjects: subjects.length > 0 ? subjects : ["General"]
     });
 
-    await student.save();
+    await studentUser.save();
 
-    res.json({ message: "Student added successfully!", student });
+    res.json({
+      message: "Student added successfully!",
+      student: studentUser,
+      loginDetails: {
+        username: name,
+        password: generatedPassword,
+      }
+    });
+
   } catch (err) {
     console.error("Error adding student:", err);
     res.status(500).json({ message: "Failed to add student" });
@@ -32,26 +46,29 @@ router.post("/add-volunteer", async (req, res) => {
   try {
     const { name, email, centreId, phone, level, subjects } = req.body;
 
-    // Validation
-    if (!name || !email || !centreId || !phone || !level || !subjects) {
-      return res.status(400).json({ message: "Please fill all fields." });
-    }
+    // Auto-generate a password for the volunteer
+    const generatedPassword = name.toLowerCase().replace(/\s+/g, "") + "123";
 
-    // Create volunteer
-    const volunteer = new Volunteer({
-      name,
+    // Create volunteer in User model
+    const volunteerUser = await User.create({
+      username: name,
+      password: generatedPassword,
+      role: "volunteer",
       email,
       centreId,
-      phone,
-      level,       // NEW
-      subjects,    // NEW (Array of subjects)
+      levels: [Number(level)],
+      subjects: subjects.length > 0 ? subjects : ["General"],
+      // phone: phone  ← only if phone is added in your User schema
     });
 
-    await volunteer.save();
-
     res.json({
+      success: true,
       message: "Volunteer added successfully!",
-      volunteer,
+      volunteer: volunteerUser,
+      loginDetails: {
+        username: name,
+        password: generatedPassword,
+      },
     });
 
   } catch (err) {
@@ -60,27 +77,30 @@ router.post("/add-volunteer", async (req, res) => {
   }
 });
 
-
 import WeeklyReport from "../models/WeeklyReport.js";
-
-// GET WEEKLY REPORTS BY LEVEL + SUBJECT
 
 router.get("/weekly-attendance-db", async (req, res) => {
   try {
     const { level, subject, startDate } = req.query;
 
     if (!level || !subject || !startDate) {
-      return res.status(400).json({ success: false, message: "Missing fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing level, subject or startDate",
+      });
     }
 
+    // Week start & end calculation
     const start = startDate.trim();
     const endDateObj = new Date(start);
     endDateObj.setDate(endDateObj.getDate() + 6);
+
     const end = endDateObj.toISOString().split("T")[0];
 
+    // Fetch weekly report from DB
     const report = await WeeklyReport.findOne({
       level: Number(level),
-      subject: { $regex: new RegExp(`^${subject}$`, "i") },
+      subject: subject,
       weekStart: start,
       weekEnd: end,
     });
@@ -89,8 +109,8 @@ router.get("/weekly-attendance-db", async (req, res) => {
       return res.json({ success: false, weekly: [] });
     }
 
-    // Convert attendance format for chart/table
-    const formattedWeekly = report.reportData.map((d) => ({
+    // Format attendance for chart
+    const weeklyFormatted = report.reportData.map((d) => ({
       date: d.date,
       present: d.presentCount,
       absent: d.absentCount,
@@ -99,30 +119,21 @@ router.get("/weekly-attendance-db", async (req, res) => {
     return res.json({
       success: true,
 
-      // 🔹 Attendance Table + Chart
-      weekly: formattedWeekly,
-
-      // 🔹 Assignments List
+      weekly: weeklyFormatted,
       assignments: report.assignments || [],
-
-      // 🔹 Topper
       topperStudent: report.topperStudent || null,
-
-      // 🔹 Weak Students
       weakStudents: report.weakStudents || [],
+      volunteerId: report.volunteerId,
 
-      // 🔹 Volunteer who submitted
-      volunteerId: report.volunteerId || null,
-
-      // (optional: return full report for debugging)
-      fullReport: report,
+      fullReport: report, // optional
     });
-
   } catch (err) {
     console.error("Weekly Report DB Error:", err);
-    return res.status(500).json({ success: false });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+
 
 router.post("/filter-donations", async (req, res) => {
   try {

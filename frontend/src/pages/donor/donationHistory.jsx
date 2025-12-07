@@ -8,7 +8,7 @@ export default function DonationHistory() {
 
   const [donations, setDonations] = useState([]);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [selected, setSelected] = useState(null); // selected donation
+  const [selected, setSelected] = useState(null);
 
   // Fetch donations for this donor
   useEffect(() => {
@@ -22,11 +22,6 @@ export default function DonationHistory() {
         if (data.success) setDonations(data.donations);
       });
   }, []);
-
-  // PRINT ONLY RECEIPT SECTION
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <div className="relative">
@@ -116,68 +111,67 @@ export default function DonationHistory() {
 
       {/* ---------------- RECEIPT POPUP ---------------- */}
       {showReceipt && selected && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
 
-    <div
-      id="receipt-preview"
-      className="bg-white p-8 rounded-2xl shadow-xl w-[480px] border border-orange-300"
-    >
-      <h2 className="text-2xl font-bold text-[#f58a1f] text-center mb-4">
-        Donation Receipt
-      </h2>
+          <div
+            id="receipt-preview"
+            className="bg-white p-8 rounded-2xl shadow-xl w-[480px] border border-orange-300"
+          >
+            <h2 className="text-2xl font-bold text-[#f58a1f] text-center mb-4">
+              Donation Receipt
+            </h2>
 
-      <div className="text-gray-800 space-y-2 text-lg">
+            <div className="text-gray-800 space-y-2 text-lg">
 
-        <p><b>Receipt ID:</b> {selected._id}</p>
+              <p><b>Receipt ID:</b> {selected._id}</p>
 
-        <p>
-          <b>Donor Name:</b> {selected.title} {selected.donorName}
-        </p>
+              <p>
+                <b>Donor Name:</b> {selected.title} {selected.donorName}
+              </p>
 
-        <p><b>Email:</b> {selected.email}</p>
+              <p><b>Email:</b> {selected.email}</p>
 
-        <p><b>Phone:</b> {selected.phone}</p>
+              <p><b>Phone:</b> {selected.phone}</p>
 
-        <p><b>Centre ID:</b> {selected.centreId}</p>
+              <p><b>Centre ID:</b> {selected.centreId}</p>
 
-        <hr className="my-3" />
+              <hr className="my-3" />
 
-        <p><b>Amount Donated:</b> ₹{selected.amount}</p>
+              <p><b>Amount Donated:</b> ₹{selected.amount}</p>
 
-        <p><b>Cause:</b> {selected.cause}</p>
+              <p><b>Cause:</b> {selected.cause}</p>
 
-        <p><b>Payment Method:</b> {selected.paymentMethod}</p>
+              <p><b>Payment Method:</b> {selected.paymentMethod}</p>
 
-        <p><b>Recurring Donation:</b> {selected.recurring ? "Yes" : "No"}</p>
+              <p><b>Recurring Donation:</b> {selected.recurring ? "Yes" : "No"}</p>
 
-        <p><b>Taxes:</b> ₹0</p>
+              <p><b>Taxes:</b> ₹0</p>
 
-        <p>
-          <b>Date:</b> {new Date(selected.date).toLocaleDateString()}
-        </p>
-      </div>
+              <p>
+                <b>Date:</b> {new Date(selected.date).toLocaleDateString()}
+              </p>
+            </div>
 
-      {/* BUTTONS */}
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={() => setShowReceipt(false)}
-          className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-        >
-          Close
-        </button>
+            {/* BUTTONS */}
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={() => setShowReceipt(false)}
+                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+              >
+                Close
+              </button>
 
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-[#f58a1f] text-white rounded-lg hover:bg-[#e27810]"
-        >
-          Print / Save PDF
-        </button>
-      </div>
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-[#f58a1f] text-white rounded-lg hover:bg-[#e27810]"
+              >
+                Print / Save PDF
+              </button>
+            </div>
 
-    </div>
-  </div>
-)}
-
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -7,6 +7,7 @@ import Attendance from "../models/Attendance.js";
 import Assignment from "../models/Assignment.js";
 import Material from "../models/Material.js";
 import WeeklyReport from "../models/WeeklyReport.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -24,57 +25,38 @@ const dummyStudents = [
    🟦 GET STUDENTS
 ------------------------------------------------------ */
 router.get("/students", async (req, res) => {
-  const { level, subject } = req.query;
-
-  if (!level || !subject)
-    return res.status(400).json({ message: "Level and subject required" });
-
   try {
-    console.log("📘 Fetching students:", { level, subject });
+    const { level, subject } = req.query;
 
-    const fromDummy = dummyStudents.filter(
-      (s) => s.level == level && s.subjects.includes(subject)
-    );
-
-    let attendanceRecords = [];
-    try {
-      attendanceRecords = await Attendance.find({ level, subject });
-    } catch (err) {
-      console.error("⚠ Error reading Attendance DB:", err);
+    if (!level || !subject) {
+      return res.status(400).json({ message: "Level and subject required" });
     }
 
-    const fromAttendance = [];
+    console.log("📘 Fetching students:", { level, subject });
 
-    attendanceRecords.forEach((entry) => {
-      if (!entry.records) return;
+    const students = await User.find({
+      role: "student",
 
-      entry.records.forEach((r) => {
-        if (!fromAttendance.some((x) => x._id === r.studentId)) {
-          fromAttendance.push({
-            _id: r.studentId,
-            name: r.name,
-            level: level,
-            subjects: [subject],
-          });
-        }
-      });
+      // Match ANY level inside levels[]
+      levels: { $in: [Number(level)] },
+
+      // Match ANY subject inside subjects[]
+      subjects: { $in: [subject] }
+    }).select("_id username levels subjects centreId");
+
+    console.log("✔ Students found:", students.length);
+
+    res.json({
+      success: true,
+      students
     });
-
-    const merged = [...fromDummy];
-
-    fromAttendance.forEach((stu) => {
-      if (!merged.some((x) => x._id === stu._id)) merged.push(stu);
-    });
-
-    console.log("✔ Final students:", merged);
-
-    res.json({ students: merged });
 
   } catch (err) {
-    console.error("❌ Students Error:", err);
+    console.error("❌ Error fetching students:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 /* ------------------------------------------------------
    🟧 SAVE ATTENDANCE
@@ -121,9 +103,16 @@ router.post("/assignment", async (req, res) => {
 
     const { volunteerId, level, subject, name, mcqs } = req.body;
 
-    if (!volunteerId || !level || !subject || !name || !mcqs)
+    // Validate Inputs
+    if (!volunteerId || !level || !subject || !name) {
       return res.status(400).json({ message: "Missing required fields!" });
+    }
 
+    if (!mcqs || !Array.isArray(mcqs) || mcqs.length === 0) {
+      return res.status(400).json({ message: "Assignment must contain at least ONE MCQ!" });
+    }
+
+    // Save Assignment
     const newAssignment = new Assignment({
       volunteerId,
       level: Number(level),
@@ -136,16 +125,18 @@ router.post("/assignment", async (req, res) => {
     const saved = await newAssignment.save();
 
     console.log("✔ Assignment saved successfully!");
-    res.json({
+    return res.json({
       success: true,
       message: "Assignment saved successfully!",
       assignment: saved,
     });
 
   } catch (err) {
-    console.log("❌ ERROR WHILE SAVING ASSIGNMENT:");
-    console.log(err);
-    res.status(500).json({ success: false, message: "Failed to save assignment" });
+    console.log("❌ ERROR WHILE SAVING ASSIGNMENT:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save assignment",
+    });
   }
 });
 
@@ -182,7 +173,7 @@ router.post("/upload-material", upload.single("file"), async (req, res) => {
     if (!volunteerId || !title || !level || !subject)
       return res.status(400).json({ message: "Missing required fields" });
 
-    const fileUrl = `/uploads/materials/${req.file.filename}`;
+    const fileUrl = `http://localhost:5000/uploads/materials/${req.file.filename}`;
 
     const savedMaterial = await Material.create({
       volunteerId,

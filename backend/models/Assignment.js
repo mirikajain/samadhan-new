@@ -15,6 +15,7 @@ const assignmentSchema = new mongoose.Schema({
   subject: String,
   name: String,
   mcqs: [mcqSchema],
+  submittedBy: String,
   createdAt: { type: Date, default: Date.now },
 });
 

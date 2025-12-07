@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     default: "volunteer",
   },
   centreId: { type: String },
-  levels: { type: [Number], default: [1] },
+  levels: { type: [Number], default: [0] },
   subjects: { type: [String], default: ["General"] }
 });
 

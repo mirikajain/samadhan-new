@@ -11,6 +11,9 @@ import Report from "./pages/volunteer/report";
 
 import AdminDashboard from "./pages/admin/dashboard";
 import DonorDashboard from "./pages/donor/dashboard";
+import StudentDashboard from "./pages/student/dashboard";
+import StudentAssignment from "./pages/student/assignment";
+import StudentMaterial from "./pages/student/material";
 
 export default function App() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -39,6 +42,9 @@ export default function App() {
       {/* ADMIN ROUTES */}
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/donor/dashboard" component={DonorDashboard} />
+      <Route path ="/student/dashboard" component={StudentDashboard} />
+      <Route path="/student/assignment/:level" component={StudentAssignment} />
+      <Route path="/student/material/:level" component={StudentMaterial} />
 
       {/* DEFAULT / HOME */}
       <Route path="/">

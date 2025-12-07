@@ -43,6 +43,7 @@ export default function Attendance({ user }) {
         setStudents(
           data.students.map((s) => ({
             ...s,
+            name: s.username,
             status: "Absent",
           }))
         );
