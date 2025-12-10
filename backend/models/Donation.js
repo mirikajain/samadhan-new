@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const DonationSchema = new mongoose.Schema({
   title: { type: String, required: true },          // Mr / Ms
-  donorName: { type: String, required: true },      // Full name
+  donorName: { type: String, required: true },      
   email: { type: String, required: true },
   phone: { type: String, required: true },
 
@@ -13,6 +13,18 @@ const DonationSchema = new mongoose.Schema({
   paymentMethod: { type: String, required: true },
 
   recurring: { type: Boolean, default: false },
+
+  // NEW FIELD FOR IMAGE UPLOAD
+  photoUrl: {
+    type: String,
+    default: "",
+  },
+
+  // OPTIONAL: if later you use Cloudinary/S3 + deletion
+  photoPublicId: {
+    type: String,
+    default: "",
+  },
 
   date: { type: Date, default: Date.now }
 });

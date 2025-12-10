@@ -60,7 +60,7 @@ export default function StudentAssignment() {
   return (
     <div className="min-h-screen bg-pink-100 p-6">
       <h1 className="text-3xl font-bold text-pink-700 mb-6">
-        Assignments for Level {level}
+        Assignments for class {level}
       </h1>
 
       {/* ASSIGNMENT LIST */}

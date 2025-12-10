@@ -140,6 +140,21 @@ router.post("/assignment", async (req, res) => {
   }
 });
 
+// GET ASSIGNMENT HISTORY BY VOLUNTEER
+router.get("/assignment-history/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const assignments = await Assignment.find({ volunteerId: id }).sort({ createdAt: -1 });
+
+    return res.json({ success: true, assignments });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+
 /* ------------------------------------------------------
    🟩 VOLUNTEER — UPLOAD STUDY MATERIAL 
 ------------------------------------------------------ */
@@ -199,6 +214,17 @@ router.post("/upload-material", upload.single("file"), async (req, res) => {
     console.log("❌ Error uploading material:", err);
     res.status(500).json({ message: "Server error while uploading material" });
   }
+});
+
+
+router.get("/material-history/:volunteerId", async (req, res) => {
+  console.log("History route called with ID:", req.params.volunteerId);
+
+  const materials = await Material.find({ volunteerId: req.params.volunteerId });
+
+  console.log("Found materials:", materials.length);
+
+  res.json({ success: true, materials });
 });
 
 

@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
+import signupImg from "../../assets/signup-img.jpg"; // reuse same illustration
 
 export default function Signup() {
   const [form, setForm] = useState({
     username: "",
     password: "",
-    role: "volunteer",
+    role: "admin",  // default only admin/donor allowed
     centreId: "",
   });
+
   const [error, setError] = useState("");
   const [, navigate] = useLocation();
 
@@ -33,124 +35,121 @@ export default function Signup() {
         return;
       }
 
-      // ✅ Store token & user in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      alert("✅ Signup successful!");
-
-      // ✅ Redirect based on user role
-      switch (data.user.role) {
-        case "admin":
-          navigate("/admin/dashboard");
-          break;
-        case "volunteer":
-          navigate("/volunteer/dashboard");
-          break;
-        case "donor":
-          navigate("/donor/dashboard");
-          break;
-        case "student":
-          navigate("/student/dashboard");
-          break;
-        default:
-          navigate("/");
-      }
+      // redirect based on role
+      if (data.user.role === "admin") navigate("/admin/dashboard");
+      if (data.user.role === "donor") navigate("/donor/dashboard");
     } catch (error) {
-      console.error("Signup error:", error);
       setError("Server not reachable. Please try again later.");
     }
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">
-          Create Account
-        </h1>
+    <div className="flex h-screen ">
+      
+      {/* LEFT SECTION */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 md:px-20">
+        {/* Logo */}
+        <h2 className="text-lg font-semibold text-purple-600 mb-2">Prerna</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Heading */}
+        <h1 className="text-4xl md:text-5xl font-bold mb-3">Create</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-6">Your Account</h1>
+
+        <p className="text-gray-500 mb-8">
+          Join us and access your dashboard
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+
+          {/* Username */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
-            </label>
             <input
               type="text"
               name="username"
               placeholder="Choose a username"
               value={form.username}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl 
+                         focus:ring-2 focus:ring-purple-500 focus:outline-none"
               required
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
             <input
               type="password"
               name="password"
               placeholder="Enter password"
               value={form.password}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl 
+                         focus:ring-2 focus:ring-purple-500 focus:outline-none"
               required
             />
           </div>
 
+          {/* Role (only Admin & Donor allowed) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Role
-            </label>
             <select
               name="role"
               value={form.role}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-xl px-4 py-3 
+                         focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="admin">Admin</option>
-              <option value="student">Student</option>
               <option value="donor">Donor</option>
-              <option value="volunteer">Volunteer</option>
             </select>
           </div>
 
+          {/* Centre ID */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Centre ID
-            </label>
             <input
               type="text"
               name="centreId"
               placeholder="Enter your Centre ID"
               value={form.centreId}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl 
+                         focus:ring-2 focus:ring-purple-500 focus:outline-none"
               required
             />
           </div>
 
-          {error && (
-            <p className="text-red-600 text-sm text-center">{error}</p>
-          )}
+          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
+          {/* Sign Up button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 
+                       rounded-xl text-lg font-semibold transition"
           >
             Sign Up
           </button>
-        </form>
 
-        <p className="text-sm text-center text-gray-600 mt-5">
-          Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
-            Login here
-          </a>
-        </p>
+          {/* Login link */}
+          <p className="text-sm text-gray-600 text-center mt-4">
+            Already have an account?{" "}
+            <a href="/login" className="text-purple-600 font-medium hover:underline">
+              Login here
+            </a>
+          </p>
+        </form>
       </div>
+
+      {/* RIGHT SECTION */}
+      <div className="hidden lg:flex w-1/2 ">
+        <img
+          src={signupImg}
+          alt="Signup illustration"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
     </div>
   );
 }

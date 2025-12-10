@@ -1,205 +1,322 @@
-// src/pages/volunteer/dashboard.jsx
 import React, { useState } from "react";
 import { useLocation } from "wouter";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  RadialBarChart,
+  RadialBar,
+  ResponsiveContainer,
+} from "recharts";
+import heroImg from "../../assets/volunteer-hero.jpg";
 import ProfileCard from "../../components/profileCard.jsx";
 
 export default function VolunteerDashboard() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const [openProfile, setOpenProfile] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {
-    id: "vol123",
     username: "Volunteer",
-    role: "volunteer",
-    centreId: "CEN-001",
-    level: 1,
-    subjects: ["Math", "Science"],
+    centreId: "UPAY Noida Sector 18",
   };
 
-  // replace with actual backend values later
-  const stats = {
-    volunteersConnected: 24,
-    studentsReached: 138,
-    studentsConnectedToVolunteer: 18,
+  // ---------------- SEARCH STATE ----------------
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Remove previous highlights
+  const removeHighlights = () => {
+    const marks = document.querySelectorAll("mark.search-highlight");
+    marks.forEach((m) => {
+      const parent = m.parentNode;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
   };
 
-  const features = [
-    { id: "attendance", title: "Mark Attendance", emoji: "📝", color: "bg-blue-200", path: "/volunteer/attendance" },
-    { id: "report", title: "Weekly Report", emoji: "📊", color: "bg-pink-200", path: "/volunteer/report" },
-    { id: "assignment", title: "Assignments", emoji: "📚", color: "bg-yellow-200", path: "/volunteer/assignment" },
-    { id: "material", title: "Upload Material", emoji: "📁", color: "bg-purple-200", path: "/volunteer/material" },
+  // Highlight occurrences
+  const highlightText = (term) => {
+    if (!term.trim()) return;
+
+    const walker = document.createTreeWalker(
+      document.querySelector("main"),
+      NodeFilter.SHOW_TEXT
+    );
+
+    let first = null;
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const text = node.nodeValue;
+
+      const index = text.toLowerCase().indexOf(term.toLowerCase());
+      if (index !== -1) {
+        const before = text.slice(0, index);
+        const match = text.slice(index, index + term.length);
+        const after = text.slice(index + term.length);
+
+        const mark = document.createElement("mark");
+        mark.className = "search-highlight bg-yellow-300 text-black px-1 rounded";
+        mark.appendChild(document.createTextNode(match));
+
+        const beforeNode = document.createTextNode(before);
+        const afterNode = document.createTextNode(after);
+
+        const parent = node.parentNode;
+        parent.replaceChild(afterNode, node);
+        parent.insertBefore(mark, afterNode);
+        parent.insertBefore(beforeNode, mark);
+
+        if (!first) first = mark;
+      }
+    }
+
+    if (first) {
+      first.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const handleSearch = () => {
+    removeHighlights();
+    if (!searchTerm.trim()) {
+      alert("Enter text to search.");
+      return;
+    }
+    highlightText(searchTerm);
+  };
+
+  // ---------------- DASHBOARD DATA ----------------
+  const classData = [
+    { name: "Class 1", value: 12 },
+    { name: "Class 2", value: 18 },
+    { name: "Class 3", value: 9 },
+  ];
+  const COLORS = ["#4F46E5", "#7C3AED", "#EC4899"];
+
+  const attendancePercent = 82;
+  const attendanceChart = [
+    { name: "Attendance", value: attendancePercent, fill: "#4F46E5" },
+  ];
+
+  const weeklySchedule = [
+    { time: "10:00", subject: "Math Class", day: "Mon", details: "Fractions + Activity" },
+    { time: "1:00", subject: "Science Workshop", day: "Wed", details: "Lab Session" },
+    { time: "11:00", subject: "Community Session", day: "Fri", details: "Peer Group" },
+  ];
+
+  const notifications = [
+    "Submit your weekly report today.",
+    "3 new assignments uploaded by students.",
+    "1 material update request from admin.",
+  ];
+
+  const recentActivity = [
+    "Uploaded: Chapter 4 Worksheets",
+    "Added Weekly Report for Week 3",
+    "Checked 7 new assignments",
+    "Uploaded: Science Reference Notes",
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-6">
+    <div className="flex min-h-screen bg-[#eef2fb]">
 
-      {/* TOP BAR */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Volunteer Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">Welcome back, {user.username}</p>
-        </div>
+      {/* ---------------- SIDEBAR ---------------- */}
+      <aside className="w-64 bg-[#1e3161] p-6 text-white flex flex-col rounded-r-3xl">
+        <h1 className="text-2xl font-semibold mb-10">Prerna</h1>
 
-        <button
-          onClick={() => setOpenProfile(!openProfile)}
-          className="w-12 h-12 rounded-full bg-white border shadow-md flex items-center justify-center hover:scale-110 transition"
-        >
-          <span className="text-blue-700 font-bold text-lg uppercase">
-            {user.username?.[0] ?? "U"}
-          </span>
-        </button>
-      </div>
+        <nav className="space-y-5 text-md">
+          <button className="flex items-center gap-3 hover:bg-[#2b417a] rounded-xl p-3">
+            📊 Dashboard
+          </button>
 
-      {/* QUICK ACTIONS */}
-      <h2 className="text-xl font-semibold text-gray-700 mb-3">Quick Actions</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {features.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => setLocation(item.path)}
-            className={`p-6 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition transform ${item.color}`}
+          <button
+            onClick={() => navigate("/volunteer/attendance")}
+            className="flex items-center gap-3 hover:bg-[#2b417a] rounded-xl p-3"
           >
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
-                <p className="text-sm text-gray-700 mt-1">Open {item.title.toLowerCase()}</p>
-              </div>
-              <div className="text-4xl">{item.emoji}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+            📝 Mark Attendance
+          </button>
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-        {[
-          { label: "Students Connected to You", value: stats.studentsConnectedToVolunteer, color: "text-blue-600" },
-          { label: "Total Students Reached", value: stats.studentsReached, color: "text-indigo-600" },
-          { label: "Volunteers Connected", value: stats.volunteersConnected, color: "text-purple-600" },
-        ].map((stat, i) => (
-          <div key={i} className="p-5 bg-white shadow-md rounded-xl border hover:shadow-lg transition">
-            <p className="text-sm text-gray-500">{stat.label}</p>
-            <p className={`text-3xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
+          <button
+            onClick={() => navigate("/volunteer/assignment")}
+            className="flex items-center gap-3 hover:bg-[#2b417a] rounded-xl p-3"
+          >
+            📚 Assignments
+          </button>
 
-      {/* NOTIFICATIONS + WEEKLY PLAN SIDE BY SIDE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+          <button
+            onClick={() => navigate("/volunteer/material")}
+            className="flex items-center gap-3 hover:bg-[#2b417a] rounded-xl p-3"
+          >
+            📁 Study Materials
+          </button>
 
-        {/* Notifications */}
-        <div className="bg-white p-6 rounded-3xl shadow-xl border">
-          <h3 className="text-xl font-bold text-purple-700 mb-4">Notifications</h3>
+          <button
+            onClick={() => navigate("/volunteer/report")}
+            className="flex items-center gap-3 hover:bg-[#2b417a] rounded-xl p-3"
+          >
+            🧾 Weekly Report
+          </button>
+        </nav>
 
-          <ul className="space-y-3">
-            <li className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-              New assignment submission received.
-            </li>
-            <li className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-              Your weekly report is pending.
-            </li>
-            <li className="p-3 bg-green-50 border-l-4 border-green-400 rounded">
-              Attendance is 90% complete this week!
-            </li>
-          </ul>
+        <div className="mt-auto">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              navigate("/login");
+            }}
+            className="flex items-center gap-3 mt-10 bg-white text-[#1e3161] py-2 px-4 rounded-xl shadow"
+          >
+            🚪 Log Out
+          </button>
         </div>
+      </aside>
 
-        {/* Weekly Teaching Plan */}
-        <div className="bg-white p-6 rounded-3xl shadow-xl">
-          <h3 className="text-xl font-bold text-purple-700 mb-4">Weekly Teaching Plan</h3>
+      {/* ---------------- MAIN CONTENT ---------------- */}
+      <main className="flex-1 p-10">
 
-          <div className="space-y-4">
+        {/* ---------------- TOP BAR ---------------- */}
+        <div className="flex justify-between items-center mb-10">
+          {/* SEARCH BAR */}
+          <div className="w-96 relative">
+            <input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="w-full px-4 py-2 rounded-xl border shadow-sm"
+            />
 
-            <div className="p-4 rounded-xl bg-purple-100 shadow flex justify-between items-center">
-              <div>
-                <p className="font-semibold">Monday</p>
-                <p className="text-sm text-gray-600">Math Class · 10:00 AM</p>
-              </div>
-              <span className="text-xl">📘</span>
-            </div>
-
-            <div className="p-4 rounded-xl bg-yellow-100 shadow flex justify-between items-center">
-              <div>
-                <p className="font-semibold">Wednesday</p>
-                <p className="text-sm text-gray-600">Science Workshop · 01:00 PM</p>
-              </div>
-              <span className="text-xl">🔬</span>
-            </div>
-
-            <div className="p-4 rounded-xl bg-pink-100 shadow flex justify-between items-center">
-              <div>
-                <p className="font-semibold">Friday</p>
-                <p className="text-sm text-gray-600">Community Session · 11:00 AM</p>
-              </div>
-              <span className="text-xl">🤝</span>
-            </div>
-
+            <span
+              className="absolute right-3 top-2.5 cursor-pointer"
+              onClick={handleSearch}
+            >
+              🔍
+            </span>
           </div>
-        </div>
 
-      </div>
-
-
-      {/* TARGET AUDIENCE + RECENT ASSIGNMENTS SIDE BY SIDE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-
-        {/* TARGET OVERVIEW */}
-        <div className="bg-white p-6 rounded-3xl shadow-xl">
-          <h3 className="text-xl font-bold text-blue-700 mb-4">Target Audience Overview</h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-            <div className="p-5 rounded-2xl bg-blue-100 shadow flex flex-col">
-              <span className="text-sm text-gray-700">Students Connected to You</span>
-              <span className="text-3xl font-bold text-blue-700">
-                {stats.studentsConnectedToVolunteer}
-              </span>
-              <span className="text-xs text-gray-600 mt-1">Assigned to your sessions</span>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-indigo-100 shadow flex flex-col">
-              <span className="text-sm text-gray-700">Total Students Reached</span>
-              <span className="text-3xl font-bold text-indigo-700">
-                {stats.studentsReached}
-              </span>
-              <span className="text-xs text-gray-600 mt-1">Across entire center</span>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-purple-100 shadow flex flex-col col-span-full">
-              <span className="text-sm text-gray-700">Volunteers Connected</span>
-              <span className="text-3xl font-bold text-purple-700">
-                {stats.volunteersConnected}
-              </span>
-              <span className="text-xs text-gray-600 mt-1">Active volunteers</span>
-            </div>
-
-          </div>
-        </div>
-
-        {/* RECENT ASSIGNMENTS */}
-        <div className="bg-white p-6 rounded-3xl shadow-xl border">
-          <h3 className="text-xl font-bold text-indigo-700 mb-4">Recent Assignments</h3>
-
-          {["Fractions Quiz - Level 2", "Reading Test - Level 3", "Nouns Worksheet - Level 1"].map(
-            (a, i) => (
-              <div key={i} className="p-4 bg-indigo-50 mb-3 rounded-xl">
-                {a}
+          {/* Profile hover menu */}
+          <div className="relative group">
+            <button className="flex items-center">
+              <div className="w-12 h-12 rounded-full bg-purple-300 flex items-center justify-center text-xl font-bold text-purple-800 shadow">
+                {user.username[0]}
               </div>
-            )
-          )}
-        </div>
-
-      </div>
-
-      {/* PROFILE PANEL */}
-      {openProfile && (
-        <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl p-6 z-50">
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-bold text-blue-700">My Profile</h2>
-            <button onClick={() => setOpenProfile(false)} className="text-gray-500 hover:text-gray-700 text-xl">
-              ✕
             </button>
+
+            <div className="absolute right-0 top-14 opacity-0 group-hover:opacity-100 transition bg-white shadow-xl rounded-xl p-4 w-48 z-50">
+              <p className="font-semibold">{user.username}</p>
+              <p className="text-sm text-gray-500 mb-3">Centre id: {user.centreId}</p>
+              <button
+                onClick={() => setOpenProfile(true)}
+                className="w-full py-2 bg-purple-600 text-white rounded-lg"
+              >
+                View Profile
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* HELLO BANNER */}
+        <div className="bg-white rounded-3xl p-8 shadow flex items-center gap-6">
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold">Welcome Back, {user.username}!</h2>
+
+            <p className="text-gray-600 mt-1">
+              See your insights for <b>Scottish centre, Gurugram</b>
+            </p>
+          </div>
+
+          <img src={heroImg} alt="Hero" className="w-40" />
+        </div>
+
+        {/* ---------------- ANALYTICS ---------------- */}
+        <div className="mt-10 grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+          {/* PIE CHART */}
+          <div className="bg-white rounded-3xl p-6 shadow">
+            <h3 className="font-bold mb-4">Students Connected to You</h3>
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie data={classData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label>
+                  {classData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* CIRCULAR ATTENDANCE */}
+          <div className="bg-white rounded-3xl p-6 shadow flex flex-col items-center">
+            <h3 className="font-bold mb-4">Avg Attendance %</h3>
+
+            <div className="relative w-full h-64 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart innerRadius="70%" outerRadius="100%" data={attendanceChart} startAngle={90} endAngle={-270}>
+                  <RadialBar minAngle={15} dataKey="value" cornerRadius={50} />
+                </RadialBarChart>
+              </ResponsiveContainer>
+
+              <div className="absolute text-4xl font-bold text-purple-700">
+                {attendancePercent}%
+              </div>
+            </div>
+          </div>
+
+          {/* WEEKLY SCHEDULE */}
+          <div className="bg-white rounded-3xl p-6 shadow">
+            <h3 className="font-bold mb-4">Upcoming Weekly Schedule</h3>
+
+            <ul className="space-y-3">
+              {weeklySchedule.map((e, i) => (
+                <li
+                  key={i}
+                  className="p-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition shadow-sm cursor-pointer"
+                >
+                  <p className="font-medium">{e.subject}</p>
+                  <p className="text-sm text-gray-500">
+                    {e.day} • {e.time}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* ---------------- NOTIFICATIONS + RECENT ---------------- */}
+        <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Notifications */}
+          <div className="bg-white rounded-3xl p-6 shadow">
+            <h3 className="font-bold mb-4">Notifications</h3>
+            <ul className="space-y-3">
+              {notifications.map((n, i) => (
+                <li key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                  {n}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-3xl p-6 shadow">
+            <h3 className="font-bold mb-4">Recent Activity</h3>
+            <ul className="space-y-3">
+              {recentActivity.map((a, i) => (
+                <li key={i} className="p-3 bg-indigo-50 rounded">
+                  {a}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </main>
+
+      {/* PROFILE POPUP */}
+      {openProfile && (
+        <div className="fixed top-0 right-0 w-80 h-full bg-white shadow-2xl p-6 z-50">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">My Profile</h3>
+            <button onClick={() => setOpenProfile(false)}>✕</button>
           </div>
 
           <ProfileCard user={user} />
@@ -207,9 +324,9 @@ export default function VolunteerDashboard() {
           <button
             onClick={() => {
               localStorage.clear();
-              setLocation("/login");
+              navigate("/login");
             }}
-            className="mt-6 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"
+            className="mt-6 w-full bg-red-500 text-white py-2 rounded-xl"
           >
             Logout
           </button>

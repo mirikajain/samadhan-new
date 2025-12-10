@@ -126,7 +126,7 @@ export default function AddVolunteer() {
                        focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
             required
           >
-            <option value="">Select Level</option>
+            <option value="">Select Class</option>
             {[1, 2, 3, 4, 5].map((lvl) => (
               <option key={lvl} value={lvl}>Level {lvl}</option>
             ))}

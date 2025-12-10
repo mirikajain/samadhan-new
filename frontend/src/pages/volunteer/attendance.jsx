@@ -1,40 +1,50 @@
 import React, { useState } from "react";
 
 export default function Attendance({ user }) {
-  console.log(user);
+  console.log("Incoming user:", user);
 
-  // ▌ Ensure fallback user fields
+  // ------------------------------
+  // LOAD USER FROM LOCAL STORAGE
+  // ------------------------------
+  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+
   user = {
-    id: user?.id || "vol123",
-    username: user?.username,
-    role: user?.role || "volunteer",
-    centreId: user?.centreId || "CEN-001",
-    level: user?.level || 1,
+    id: user?.id || storedUser.id || "vol123",
+    username: user?.username || storedUser.username,
+    role: user?.role || storedUser.role || "volunteer",
+    centreId: user?.centreId || storedUser.centreId || "CEN-001",
+
+    // 🟢 Assigned classes dynamically
+    levels: user?.levels || storedUser.levels || [1],
+
+    // Assigned subjects
     subjects:
-      user?.subjects?.length > 0
-        ? user.subjects
-        : ["Math", "Science", "English"],
+      user?.subjects || storedUser.subjects || ["Math", "Science", "English"],
   };
 
-  // ▌ States
+  // ------------------------------
+  // STATES
+  // ------------------------------
   const [subject, setSubject] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState(user.level);
+  const [selectedLevel, setSelectedLevel] = useState(user.levels[0] || "");
   const [date, setDate] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const API = "http://localhost:5000";
 
-  // ▌ Fetch Students
+  // ------------------------------
+  // Fetch Students
+  // ------------------------------
   const fetchStudents = async () => {
     if (!subject) return alert("Please select a subject!");
-    if (!selectedLevel) return alert("Please select a level!");
+    if (!selectedLevel) return alert("Please select a class!");
 
     setLoading(true);
 
     try {
       const url = `${API}/api/volunteer/students?level=${selectedLevel}&subject=${subject}`;
-      console.log("🌐 Fetching:", url);
+      console.log("Fetching:", url);
 
       const res = await fetch(url);
       const data = await res.json();
@@ -52,16 +62,20 @@ export default function Attendance({ user }) {
         setStudents([]);
       }
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.error("Fetch error:", err);
       alert("Backend not reachable.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ▌ Submit Attendance
+  // ------------------------------
+  // Submit Attendance
+  // ------------------------------
   const submitAttendance = async () => {
-    if (!subject || !date) return alert("Please fill all fields!");
+    if (!subject || !date) {
+      return alert("Please fill all fields!");
+    }
 
     const payload = {
       volunteerId: user.id,
@@ -75,7 +89,7 @@ export default function Attendance({ user }) {
       })),
     };
 
-    console.log("📤 Submitting:", payload);
+    console.log("Submitting:", payload);
 
     try {
       const res = await fetch(`${API}/api/volunteer/attendance`, {
@@ -87,28 +101,32 @@ export default function Attendance({ user }) {
       const data = await res.json();
       alert(data.message);
 
-      // Reset
       setStudents([]);
-      setDate("");
       setSubject("");
+      setDate("");
     } catch (err) {
-      console.error("❌ Submit error:", err);
+      console.error("Submit error:", err);
       alert("Submission failed.");
     }
   };
 
-  // ▌ Status Update
+  // ------------------------------
+  // Status Update Handler (FIXED)
+  // ------------------------------
   const handleStatusChange = (id, status) => {
     setStudents((prev) =>
       prev.map((s) => (s._id === id ? { ...s, status } : s))
     );
   };
 
+  // ------------------------------
+  // RETURN UI
+  // ------------------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      {/* Main Card */}
+
       <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl p-8 border border-blue-200 max-w-5xl mx-auto">
-        
+
         <h2 className="text-3xl font-bold text-blue-700 mb-2">
           Mark Attendance
         </h2>
@@ -117,29 +135,30 @@ export default function Attendance({ user }) {
           Logged in as <strong>{user.username}</strong> ({user.role})
         </p>
 
-        {/* Filters */}
+        {/* FILTERS */}
         <div className="grid md:grid-cols-4 gap-5 mb-6">
-          
-          {/* Level */}
+
+          {/* CLASS DROPDOWN */}
           <div>
             <label className="block text-sm font-medium text-blue-800 mb-1">
-              Level
+              Class
             </label>
             <select
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300"
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2"
             >
-              <option value="">Select Level</option>
-              {[1, 2, 3, 4, 5].map((lvl) => (
-                <option key={lvl} value={lvl}>
-                  Level {lvl}
+              <option value="">Select Class</option>
+
+              {user.levels.map((cls) => (
+                <option key={cls} value={cls}>
+                  Class {cls}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Subject */}
+          {/* SUBJECT */}
           <div>
             <label className="block text-sm font-medium text-blue-800 mb-1">
               Subject
@@ -147,9 +166,10 @@ export default function Attendance({ user }) {
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300"
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2"
             >
               <option value="">Select Subject</option>
+
               {user.subjects.map((sub, i) => (
                 <option key={i} value={sub}>
                   {sub}
@@ -158,7 +178,7 @@ export default function Attendance({ user }) {
             </select>
           </div>
 
-          {/* Date */}
+          {/* DATE */}
           <div>
             <label className="block text-sm font-medium text-blue-800 mb-1">
               Date
@@ -167,29 +187,30 @@ export default function Attendance({ user }) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300"
+              className="w-full border border-blue-200 bg-blue-50 rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Fetch */}
+          {/* FETCH BUTTON */}
           <div className="flex items-end">
             <button
               onClick={fetchStudents}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
             >
               {loading ? "Loading..." : "Fetch Students"}
             </button>
           </div>
         </div>
 
-        {/* Bulk Action Buttons */}
+        {/* BULK ACTIONS */}
         {students.length > 0 && (
           <div className="flex justify-end gap-3 mb-4">
+
             <button
               onClick={() =>
                 setStudents(students.map((s) => ({ ...s, status: "Present" })))
               }
-              className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-medium shadow-sm hover:bg-green-200"
+              className="px-4 py-2 rounded-full bg-green-100 text-green-700 shadow-sm hover:bg-green-200"
             >
               Mark All Present
             </button>
@@ -198,60 +219,22 @@ export default function Attendance({ user }) {
               onClick={() =>
                 setStudents(students.map((s) => ({ ...s, status: "Absent" })))
               }
-              className="px-4 py-2 rounded-full bg-red-100 text-red-700 font-medium shadow-sm hover:bg-red-200"
+              className="px-4 py-2 rounded-full bg-red-100 text-red-700 shadow-sm hover:bg-red-200"
             >
               Mark All Absent
             </button>
           </div>
         )}
 
-        {/* Students List */}
+        {/* STUDENTS LIST */}
         {students.length > 0 ? (
           <div className="space-y-3 mt-4">
             {students.map((s) => (
-              <div
+              <StudentRow
                 key={s._id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-blue-100 flex justify-between items-center"
-              >
-                {/* Student Info */}
-                <div>
-                  <p className="font-semibold text-gray-800">{s.name}</p>
-                  <p className="text-xs text-gray-500">ID: {s._id}</p>
-                </div>
-
-                {/* Status Toggle */}
-                <div className="flex gap-2 items-center">
-
-                  {/* Present */}
-                  <button
-                    onClick={() => handleStatusChange(s._id, "Present")}
-                    className={`px-4 py-1 rounded-full text-sm font-medium transition shadow-sm 
-                      ${
-                        s.status === "Present"
-                          ? "bg-green-500 text-white"
-                          : "bg-green-100 text-green-600 hover:bg-green-200"
-                      }
-                    `}
-                  >
-                    Present
-                  </button>
-
-                  {/* Absent */}
-                  <button
-                    onClick={() => handleStatusChange(s._id, "Absent")}
-                    className={`px-4 py-1 rounded-full text-sm font-medium transition shadow-sm
-                      ${
-                        s.status === "Absent"
-                          ? "bg-red-500 text-white"
-                          : "bg-red-100 text-red-600 hover:bg-red-200"
-                      }
-                    `}
-                  >
-                    Absent
-                  </button>
-
-                </div>
-              </div>
+                s={s}
+                handleStatusChange={handleStatusChange}
+              />
             ))}
           </div>
         ) : (
@@ -262,18 +245,61 @@ export default function Attendance({ user }) {
           )
         )}
 
-        {/* Submit */}
+        {/* SUBMIT BUTTON */}
         {students.length > 0 && (
           <div className="flex justify-end mt-6">
             <button
               onClick={submitAttendance}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow transition"
+              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow"
             >
               Submit Attendance
             </button>
           </div>
         )}
+
       </div>
+    </div>
+  );
+}
+
+// ------------------------------------------
+// STUDENT ROW COMPONENT
+// ------------------------------------------
+function StudentRow({ s, handleStatusChange }) {
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-blue-100 flex justify-between items-center">
+
+      <div>
+        <p className="font-semibold text-gray-800">{s.name}</p>
+        <p className="text-xs text-gray-500">ID: {s._id}</p>
+      </div>
+
+      <div className="flex gap-2 items-center">
+
+        <button
+          onClick={() => handleStatusChange(s._id, "Present")}
+          className={`px-4 py-1 rounded-full text-sm font-medium shadow-sm ${
+            s.status === "Present"
+              ? "bg-green-500 text-white"
+              : "bg-green-100 text-green-600 hover:bg-green-200"
+          }`}
+        >
+          Present
+        </button>
+
+        <button
+          onClick={() => handleStatusChange(s._id, "Absent")}
+          className={`px-4 py-1 rounded-full text-sm font-medium shadow-sm ${
+            s.status === "Absent"
+              ? "bg-red-500 text-white"
+              : "bg-red-100 text-red-600 hover:bg-red-200"
+          }`}
+        >
+          Absent
+        </button>
+
+      </div>
+
     </div>
   );
 }

@@ -10,6 +10,10 @@ export default function DonationHistory() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [selected, setSelected] = useState(null);
 
+  // NEW: Photo popup states
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [photoToShow, setPhotoToShow] = useState(null);
+
   // Fetch donations for this donor
   useEffect(() => {
     fetch("http://localhost:5000/api/donor/get-donations", {
@@ -26,22 +30,18 @@ export default function DonationHistory() {
   return (
     <div className="relative">
 
-      {/* PRINT CSS — Only receipt prints */}
+      {/* PRINT CSS (only receipt prints) */}
       <style>
         {`
           @media print {
-            body * {
-              visibility: hidden;
-            }
-            #receipt-preview, #receipt-preview * {
-              visibility: visible;
-            }
-            #receipt-preview {
-              position: fixed;
-              top: 0;
-              left: 0;
-              width: 100%;
-              padding: 20px;
+            body * { visibility: hidden; }
+            #receipt-preview, #receipt-preview * { visibility: visible; }
+            #receipt-preview { 
+              position: fixed; 
+              top: 0; 
+              left: 0; 
+              width: 100%; 
+              padding: 20px; 
               background: white;
             }
           }
@@ -50,7 +50,6 @@ export default function DonationHistory() {
 
       {/* MAIN CARD */}
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-orange-200">
-
         <h2 className="text-3xl font-bold text-[#f58a1f] mb-6 text-center">
           Donation History
         </h2>
@@ -69,6 +68,7 @@ export default function DonationHistory() {
                   <th className="border p-3">Payment</th>
                   <th className="border p-3">Recurring</th>
                   <th className="border p-3">Date</th>
+                  <th className="border p-3">Photo</th>
                   <th className="border p-3">Receipt</th>
                 </tr>
               </thead>
@@ -78,9 +78,7 @@ export default function DonationHistory() {
                   <tr key={i} className="text-center hover:bg-orange-50">
                     <td className="border p-3">{d.donorName}</td>
                     <td className="border p-3">{d.centreId}</td>
-                    <td className="border p-3 text-[#f58a1f] font-bold">
-                      ₹{d.amount}
-                    </td>
+                    <td className="border p-3 text-[#f58a1f] font-bold">₹{d.amount}</td>
                     <td className="border p-3">{d.cause}</td>
                     <td className="border p-3">{d.paymentMethod}</td>
                     <td className="border p-3">{d.recurring ? "Yes" : "No"}</td>
@@ -88,7 +86,26 @@ export default function DonationHistory() {
                       {new Date(d.date).toLocaleDateString()}
                     </td>
 
-                    {/* OPEN RECEIPT PREVIEW */}
+                    {/* PHOTO COLUMN */}
+                    <td className="border p-3">
+                      {d.photoUrl ? (
+                        <button
+                          onClick={() => {
+                            setPhotoToShow(d.photoUrl);
+                            setPhotoModalOpen(true);
+                          }}
+                          className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                        >
+                          See Photo
+                        </button>
+                      ) : (
+                        <span className="text-gray-500 text-sm italic">
+                          Not added yet
+                        </span>
+                      )}
+                    </td>
+
+                    {/* RECEIPT BUTTON */}
                     <td className="border p-3">
                       <button
                         onClick={() => {
@@ -145,11 +162,7 @@ export default function DonationHistory() {
 
               <p><b>Recurring Donation:</b> {selected.recurring ? "Yes" : "No"}</p>
 
-              <p><b>Taxes:</b> ₹0</p>
-
-              <p>
-                <b>Date:</b> {new Date(selected.date).toLocaleDateString()}
-              </p>
+              <p><b>Date:</b> {new Date(selected.date).toLocaleDateString()}</p>
             </div>
 
             {/* BUTTONS */}
@@ -170,6 +183,33 @@ export default function DonationHistory() {
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* ---------------- PHOTO MODAL POPUP ---------------- */}
+      {photoModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+
+          <div className="bg-white p-5 rounded-xl shadow-xl max-w-lg w-full relative">
+
+            <h3 className="text-xl font-bold mb-3 text-center">Donation Photo</h3>
+
+            <img
+              src={photoToShow}
+              alt="Donation proof"
+              className="w-full h-auto rounded-lg shadow"
+            />
+
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setPhotoModalOpen(false)}
+                className="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
         </div>
       )}
 

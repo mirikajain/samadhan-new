@@ -31,7 +31,7 @@ export default function StudentMaterial() {
     <div className="min-h-screen bg-pink-100 p-6">
 
       <h1 className="text-3xl font-bold text-pink-700 mb-6">
-        📚 Study Material — Level {level}
+        📚 Study Material — Class {level}
       </h1>
 
       {materials.length === 0 ? (

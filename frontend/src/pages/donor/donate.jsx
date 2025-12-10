@@ -10,13 +10,18 @@ export default function Donate() {
 
   const causes = [
     "Education Support",
-    "Feeding Program",
-    "Girls Empowerment",
-    "Health & Hygiene",
-    "Community Development",
+    "Vocational training",
+    "Healthcare access",
+    "Health & Hygiene"
   ];
 
   const paymentMethods = ["UPI", "Cash", "Bank Transfer"];
+
+  const centres = [
+    { id: "1", name: "Scottish 57" },
+    { id: "2", name: "Sikanderpur" },
+    { id: "3", name: "Sohna Road" }
+  ];
 
   const [amount, setAmount] = useState("");
   const [cause, setCause] = useState("");
@@ -30,6 +35,9 @@ export default function Donate() {
   const [fullName, setFullName] = useState(user.username || "");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+
+  // NEW: Centre Dropdown
+  const [centre, setCentre] = useState(user.centreId || "57");
 
   const impactMessage = (() => {
     if (!amount) return "Your donation will create a meaningful impact.";
@@ -50,7 +58,8 @@ export default function Donate() {
       donorName: fullName,
       email,
       phone,
-      centreId: user.centreId || "N/A",
+
+      centreId: centre, // <-- NEW: Selected centre ID
 
       amount: Number(amount),
       cause,
@@ -132,6 +141,23 @@ export default function Donate() {
               placeholder="10-digit phone number"
               className="w-full p-3 bg-orange-50 border border-orange-300 rounded-lg"
             />
+          </div>
+
+          {/* ---------------- CENTRE DROPDOWN ---------------- */}
+          <div className="md:col-span-2">
+            <label className="text-orange-800 font-semibold">Select Centre *</label>
+            <select
+              value={centre}
+              onChange={(e) => setCentre(e.target.value)}
+              className="w-full p-3 bg-orange-50 border border-orange-300 rounded-lg"
+            >
+              <option value="">Select a centre</option>
+              {centres.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} (ID: {c.id})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

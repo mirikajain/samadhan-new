@@ -87,7 +87,7 @@ export default function ViewReport() {
           <input
             type="number"
             name="level"
-            placeholder="Level"
+            placeholder="Class"
             value={filters.level}
             onChange={handleChange}
             className="p-3 border rounded-xl bg-green-50"

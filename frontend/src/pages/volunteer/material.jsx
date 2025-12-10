@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function UploadMaterial({ user }) {
   // fallback user
@@ -13,7 +13,12 @@ export default function UploadMaterial({ user }) {
         : ["Math", "Science", "English"],
   };
 
-  // state
+  const API = "http://localhost:5000";
+
+  // Tabs
+  const [activeTab, setActiveTab] = useState("upload");
+
+  // upload states
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [level, setLevel] = useState(user.level);
@@ -22,8 +27,26 @@ export default function UploadMaterial({ user }) {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
 
-  const API = "http://localhost:5000";
+  // history
+  const [materials, setMaterials] = useState([]);
 
+  // fetch uploaded material history
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`${API}/api/volunteer/material-history/${user.id}`);
+      const data = await res.json();
+
+      if (data.success) setMaterials(data.materials);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  // upload material
   const uploadMaterial = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -50,22 +73,24 @@ export default function UploadMaterial({ user }) {
       }
     };
 
-    xhr.onload = function () {
+    xhr.onload = () => {
       if (xhr.status === 200) {
         setMessage("Material uploaded successfully! 🎉");
         setProgress(100);
 
-        // reset form
+        // reset
         setTitle("");
         setDescription("");
         setSubject("");
         setFile(null);
+
+        fetchHistory();
       } else {
         setMessage("Upload failed ❌");
       }
     };
 
-    xhr.onerror = function () {
+    xhr.onerror = () => {
       setMessage("Network error ❗ Please try again.");
     };
 
@@ -74,140 +99,234 @@ export default function UploadMaterial({ user }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 p-6">
-      <div className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-blue-200 max-w-3xl mx-auto">
+      <div className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-blue-200 max-w-4xl mx-auto">
 
-        <h2 className="text-3xl font-extrabold text-blue-700 mb-2">
-          📚 Upload Study Material
+        <h2 className="text-3xl font-extrabold text-blue-700 mb-3">
+          📘 Study Material
         </h2>
 
         <p className="text-sm text-gray-600 mb-6">
           Logged in as <strong>{user.username}</strong> ({user.role})
         </p>
 
-        {/* FORM */}
-        <form onSubmit={uploadMaterial} className="space-y-6">
-
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-semibold text-blue-700 mb-1">
-              ✏️ Title *
-            </label>
-            <input
-              type="text"
-              className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-              placeholder="Ex: Algebra Chapter 1 Notes"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-semibold text-blue-700 mb-1">
-              📝 Description
-            </label>
-            <textarea
-              className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-              placeholder="Optional description..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          {/* LEVEL + SUBJECT */}
-          <div className="grid md:grid-cols-2 gap-6">
-            
-            {/* Level */}
-            <div>
-              <label className="block text-sm font-semibold text-blue-700 mb-1">
-                🎓 Level *
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-                required
-              >
-                <option value="">Select Level</option>
-                {[1, 2, 3, 4, 5].map((lvl) => (
-                  <option key={lvl} value={lvl}>Level {lvl}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Subject */}
-            <div>
-              <label className="block text-sm font-semibold text-blue-700 mb-1">
-                📘 Subject *
-              </label>
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-                required
-              >
-                <option value="">Select Subject</option>
-                {user.subjects.map((sub, i) => (
-                  <option key={i} value={sub}>
-                    {sub}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-          </div>
-
-          {/* FILE UPLOAD */}
-          <div className="mt-4">
-            <label className="block text-sm font-semibold text-blue-700 mb-1">
-              📎 Upload File *
-            </label>
-
-            <div className="border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-6 text-center shadow-sm hover:bg-blue-100 transition cursor-pointer">
-              <input
-                type="file"
-                className="w-full text-sm"
-                onChange={(e) => setFile(e.target.files[0])}
-                required
-              />
-              <p className="mt-2 text-blue-700 text-sm">
-                {file ? `Selected: ${file.name}` : "Choose PDF, PPT, DOC, or Image"}
-              </p>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {progress > 0 && (
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-              <div
-                className="h-full bg-blue-500 transition-all rounded-full"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          )}
-
-          {/* Submit */}
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8">
           <button
-            type="submit"
-            className="w-full py-3 rounded-xl text-white font-semibold bg-blue-600 hover:bg-blue-700 hover:scale-105 shadow-lg transition"
+            onClick={() => setActiveTab("upload")}
+            className={`px-6 py-2 rounded-xl text-lg font-semibold shadow 
+              ${activeTab === "upload" ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-700"}`}
           >
-            🚀 Upload Material
+            ➕ Upload Material
           </button>
 
-          {/* Message */}
-          {message && (
-            <p
-              className={`text-center text-md font-semibold mt-2 ${
-                message.includes("success") ? "text-green-700" : "text-red-600"
-              }`}
-            >
-              {message}
-            </p>
-          )}
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-6 py-2 rounded-xl text-lg font-semibold shadow 
+              ${activeTab === "history" ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-700"}`}
+          >
+            📚 Material History
+          </button>
+        </div>
 
-        </form>
+        {/* ============================
+            TAB 1 — UPLOAD MATERIAL
+        ============================ */}
+        {activeTab === "upload" && (
+          <form onSubmit={uploadMaterial} className="space-y-6">
+
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-semibold text-blue-700 mb-1">
+                ✏️ Title *
+              </label>
+              <input
+                type="text"
+                className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
+                placeholder="Ex: Algebra Chapter 1 Notes"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-blue-700 mb-1">
+                📝 Description
+              </label>
+              <textarea
+                className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
+                placeholder="Optional description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* CLASS + SUBJECT */}
+            <div className="grid md:grid-cols-2 gap-6">
+              
+              {/* Class */}
+              <div>
+                <label className="block text-sm font-semibold text-blue-700 mb-1">
+                  🎓 Class *
+                </label>
+                <select
+                  value={level}
+                  onChange={(e) => setLevel(e.target.value)}
+                  className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm"
+                  required
+                >
+                  <option value="">Select Class</option>
+                  {[1, 2, 3, 4, 5].map((cls) => (
+                    <option key={cls} value={cls}>Class {cls}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-semibold text-blue-700 mb-1">
+                  📘 Subject *
+                </label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full border border-blue-300 bg-blue-50 rounded-lg px-3 py-2 shadow-sm"
+                  required
+                >
+                  <option value="">Select Subject</option>
+                  {user.subjects.map((sub, i) => (
+                    <option key={i} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+
+            </div>
+
+            {/* FILE UPLOAD */}
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-blue-700 mb-1">
+                📎 Upload File *
+              </label>
+
+              <div className="border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-6 text-center shadow-sm hover:bg-blue-100 transition cursor-pointer">
+                <input
+                  type="file"
+                  className="w-full text-sm"
+                  onChange={(e) => setFile(e.target.files[0])}
+                  required
+                />
+                <p className="mt-2 text-blue-700 text-sm">
+                  {file ? `Selected: ${file.name}` : "Choose PDF, PPT, DOC, or Image"}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {progress > 0 && (
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-blue-500 transition-all rounded-full"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl text-white font-semibold bg-blue-600 hover:bg-blue-700 hover:scale-105 shadow-lg transition"
+            >
+              🚀 Upload Material
+            </button>
+
+            {/* Message */}
+            {message && (
+              <p
+                className={`text-center text-md font-semibold mt-2 ${
+                  message.includes("success") ? "text-green-700" : "text-red-600"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+
+          </form>
+        )}
+
+        {/* ============================
+            TAB 2 — MATERIAL HISTORY
+        ============================ */}
+        {activeTab === "history" && (
+          <div className="mt-4">
+            <h3 className="text-2xl font-bold text-purple-700 mb-4">Uploaded Material</h3>
+
+            {materials.length === 0 ? (
+              <p className="text-gray-600">No study material uploaded yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border border-purple-300 rounded-xl">
+                  <thead className="bg-purple-200 text-purple-900">
+                    <tr>
+                      <th className="border p-2">Title</th>
+                      <th className="border p-2">Class</th>
+                      <th className="border p-2">Subject</th>
+                      <th className="border p-2">File</th>
+                      <th className="border p-2">Uploaded</th>
+                      
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {materials.map((m, i) => (
+                      <MaterialRow key={i} material={m} />
+                    ))}
+                  </tbody>
+
+                </table>
+              </div>
+            )}
+
+          </div>
+        )}
+
       </div>
     </div>
+  );
+}
+
+// --------------------------------------------
+// MATERIAL ROW COMPONENT
+// --------------------------------------------
+function MaterialRow({ material }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <tr className="text-center hover:bg-purple-50">
+        <td className="border p-2 font-semibold">{material.title}</td>
+        <td className="border p-2">Class {material.level}</td>
+        <td className="border p-2">{material.subject}</td>
+
+        <td className="border p-2">
+          <a
+            className="text-blue-600 underline"
+            href={material.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View File
+          </a>
+        </td>
+
+        <td className="border p-2">
+          {new Date(material.createdAt).toLocaleDateString()}
+        </td>
+
+        
+      </tr>
+
+      
+    </>
   );
 }
