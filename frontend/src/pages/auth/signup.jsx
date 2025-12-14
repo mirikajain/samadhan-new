@@ -120,6 +120,22 @@ export default function Signup() {
             />
           </div>
 
+          <div>
+            <select
+              name="ngo"
+              value={form.ngoName}
+              onChange={handleChange}
+              className="w-full border rounded-xl px-4 py-3 
+                         focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled>
+                Select your NGO
+              </option>
+              <option value="admin">Upay</option>
+              
+            </select>
+          </div>
+
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
           {/* Sign Up button */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   PieChart,
@@ -15,10 +15,15 @@ import ProfileCard from "../../components/profileCard.jsx";
 export default function VolunteerDashboard() {
   const [, navigate] = useLocation();
   const [openProfile, setOpenProfile] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [weeklySchedule, setWeeklySchedule] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+
+
 
   const user = JSON.parse(localStorage.getItem("user")) || {
     username: "Volunteer",
-    centreId: "UPAY Noida Sector 18",
+    centreId: "Scottish 57 Gurgaon",
   };
 
   // ---------------- SEARCH STATE ----------------
@@ -98,24 +103,72 @@ export default function VolunteerDashboard() {
     { name: "Attendance", value: attendancePercent, fill: "#4F46E5" },
   ];
 
-  const weeklySchedule = [
-    { time: "10:00", subject: "Math Class", day: "Mon", details: "Fractions + Activity" },
-    { time: "1:00", subject: "Science Workshop", day: "Wed", details: "Lab Session" },
-    { time: "11:00", subject: "Community Session", day: "Fri", details: "Peer Group" },
-  ];
+  async function loadWeeklySchedule() {
+  try {
+    const res = await fetch(
+      "http://localhost:5000/api/volunteer/schedule"
+    );
+    const data = await res.json();
 
-  const notifications = [
-    "Submit your weekly report today.",
-    "3 new assignments uploaded by students.",
-    "1 material update request from admin.",
-  ];
+    if (data.success) {
+      setWeeklySchedule(data.schedules);
+    }
+  } catch (err) {
+    console.error("Volunteer weekly schedule error:", err);
+  }
+}
+  async function loadRecentActivity() {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/volunteer/recent-activity/${user.id}`
+    );
+    const data = await res.json();
+    if (data.success) setRecentActivity(data.activities);
+  } catch (err) {
+    console.error("Recent activity error:", err);
+  }
+}
 
-  const recentActivity = [
-    "Uploaded: Chapter 4 Worksheets",
-    "Added Weekly Report for Week 3",
-    "Checked 7 new assignments",
-    "Uploaded: Science Reference Notes",
-  ];
+
+
+  
+
+  
+
+  
+
+  useEffect(() => {
+  async function loadNotifications() {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/volunteer/notifications/${user.id}`
+      );
+      const data = await res.json();
+      if (data.success) setNotifications(data.notifications);
+    } catch (err) {
+      console.error("Volunteer notifications error:", err);
+    }
+  }
+
+  async function loadRecentActivity() {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/volunteer/recent-activity/${user.id}`
+    );
+    const data = await res.json();
+    if (data.success) setRecentActivity(data.activities);
+  } catch (err) {
+    console.error("Recent activity error:", err);
+  }
+}
+
+  loadRecentActivity();
+  loadNotifications();
+  loadWeeklySchedule();
+}, []);
+
+
+
 
   return (
     <div className="flex min-h-screen bg-[#eef2fb]">
@@ -264,50 +317,88 @@ export default function VolunteerDashboard() {
           </div>
 
           {/* WEEKLY SCHEDULE */}
-          <div className="bg-white rounded-3xl p-6 shadow">
-            <h3 className="font-bold mb-4">Upcoming Weekly Schedule</h3>
+          {/* WEEKLY SCHEDULE */}
+<div className="bg-white rounded-3xl p-6 shadow">
+  <h3 className="font-bold mb-4">Upcoming Weekly Schedule</h3>
 
+  {weeklySchedule.length === 0 ? (
+    <p className="text-gray-500 text-sm">
+      No schedule published yet.
+    </p>
+  ) : (
+    <ul className="space-y-3">
+      {weeklySchedule.map((e) => (
+        <li
+          key={e._id}
+          className="p-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition shadow-sm"
+        >
+          <p className="font-medium">{e.subject}</p>
+          <p className="text-sm text-gray-500">
+            {new Date(e.date).toLocaleDateString("en-IN", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            })}{" "}
+            • {e.time}
+          </p>
+          <p className="text-xs text-gray-400">
+            Class {e.level}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+
+        {/* ---------------- NOTIFICATIONS + RECENT ---------------- */}
+        <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Notifications */}
+          <div className="bg-white rounded-3xl p-6 shadow lg:col-span-2">
+            <h3 className="font-bold mb-4">Notifications</h3>
             <ul className="space-y-3">
-              {weeklySchedule.map((e, i) => (
-                <li
-                  key={i}
-                  className="p-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition shadow-sm cursor-pointer"
-                >
-                  <p className="font-medium">{e.subject}</p>
-                  <p className="text-sm text-gray-500">
-                    {e.day} • {e.time}
-                  </p>
-                </li>
-              ))}
-            </ul>
+  {notifications.length === 0 ? (
+    <li className="text-gray-500 text-sm">No new notifications</li>
+  ) : (
+    notifications.map((n, i) => (
+      <li
+        key={i}
+        className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded"
+      >
+        {n}
+      </li>
+    ))
+  )}
+</ul>
+
           </div>
         </div>
 
-        {/* ---------------- NOTIFICATIONS + RECENT ---------------- */}
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Notifications */}
-          <div className="bg-white rounded-3xl p-6 shadow">
-            <h3 className="font-bold mb-4">Notifications</h3>
-            <ul className="space-y-3">
-              {notifications.map((n, i) => (
-                <li key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                  {n}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Recent Activity */}
+<div className="bg-white rounded-3xl p-6 shadow">
+  <h3 className="font-bold mb-4">Recent Activity</h3>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-3xl p-6 shadow">
-            <h3 className="font-bold mb-4">Recent Activity</h3>
-            <ul className="space-y-3">
-              {recentActivity.map((a, i) => (
-                <li key={i} className="p-3 bg-indigo-50 rounded">
-                  {a}
-                </li>
-              ))}
-            </ul>
-          </div>
+  {recentActivity.length === 0 ? (
+    <p className="text-gray-500 text-sm">
+      No recent activity
+    </p>
+  ) : (
+    <ul className="space-y-3">
+      {recentActivity.map((a, i) => (
+        <li
+          key={i}
+          className="p-3 bg-indigo-50 rounded-lg text-sm"
+        >
+          {a.message}
+          <span className="block text-xs text-gray-400 mt-1">
+            {new Date(a.createdAt).toLocaleString()}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
         </div>
       </main>
 

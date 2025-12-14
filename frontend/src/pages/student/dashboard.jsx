@@ -81,20 +81,30 @@ export default function StudentDashboard() {
   const [attendance, setAttendance] = useState({});
   const [overall, setOverall] = useState({ present: 0, total: 0 });
   const [performanceStatus, setPerformanceStatus] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [weeklySchedule, setWeeklySchedule] = useState([]);
+
+
 
   // WEEKLY SCHEDULE
-  const weeklySchedule = [
-    { time: "10:00", subject: "Math", day: "Mon", details: "Fractions" },
-    { time: "11:00", subject: "English", day: "Tue", details: "Grammar" },
-    { time: "1:00", subject: "EVS", day: "Thu", details: "Plants & Life" },
-  ];
+  async function loadWeeklySchedule() {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/student/schedule/${user.levels?.[0]}`
+    );
+    const data = await res.json();
+
+    if (data.success) {
+      setWeeklySchedule(data.schedules);
+    }
+  } catch (err) {
+    console.error("Weekly Schedule Error:", err);
+  }
+}
+
 
   // NOTIFICATIONS
-  const notifications = [
-    "New worksheet added for English.",
-    "Your Math teacher posted a practice quiz.",
-    "Science Activity Day this Friday!",
-  ];
+
 
   // PERFORMANCE
   const [weeklyReport, setWeeklyReport] = useState(null);
@@ -103,6 +113,8 @@ export default function StudentDashboard() {
   useEffect(() => {
     loadAttendance();
     loadWeeklyReport();
+    loadNotifications();
+    loadWeeklySchedule(); 
   }, []);
 
   async function loadAttendance() {
@@ -143,6 +155,31 @@ export default function StudentDashboard() {
     }
   }
 
+  async function loadNotifications() {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/student/notifications/${user.id}`
+    );
+    const data = await res.json();
+    console.log("NOTIFICATIONS API RESPONSE:", data.notifications);
+
+    if (data.success) {
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      const recent = data.notifications.filter(
+        (n) =>
+          new Date(n.createdAt) >= twoDaysAgo &&
+          n.level === user.levels?.[0]
+      );
+
+      setNotifications(recent);
+    }
+  } catch (err) {
+    console.error("Notification Error:", err);}
+  }
+
+
   const calculateOverall = (attendanceData) => {
     let present = 0;
     let total = 0;
@@ -157,8 +194,11 @@ export default function StudentDashboard() {
     setOverall({ present, total });
   };
 
+
+
   const attendancePercent =
     overall.total > 0 ? Math.round((overall.present / overall.total) * 100) : 0;
+  
 
   return (
     <div className="flex min-h-screen bg-[#ffe9e9]">
@@ -284,38 +324,71 @@ export default function StudentDashboard() {
           </div>
 
           {/* WEEKLY SCHEDULE */}
-          <div className="bg-white rounded-3xl p-6 shadow">
-            <h3 className="font-bold mb-4">Weekly Class Schedule</h3>
-            <ul className="space-y-3">
-              {weeklySchedule.map((event, i) => (
-                <li
-                  key={i}
-                  className="p-4 rounded-xl bg-red-50 hover:bg-red-100 transition shadow-sm"
-                >
-                  <p className="font-medium">{event.subject}</p>
-                  <p className="text-sm text-gray-500">
-                    {event.day} • {event.time}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* WEEKLY SCHEDULE */}
+<div className="bg-white rounded-3xl p-6 shadow">
+  <h3 className="font-bold mb-4">Weekly Class Schedule</h3>
+
+  {weeklySchedule.length === 0 ? (
+    <p className="text-gray-500 text-sm">
+      No schedule published yet.
+    </p>
+  ) : (
+    <ul className="space-y-3">
+      {weeklySchedule.map((event) => (
+        <li
+          key={event._id}
+          className="p-4 rounded-xl bg-red-50 hover:bg-red-100 transition shadow-sm"
+        >
+          <p className="font-medium">{event.subject}</p>
+          <p className="text-sm text-gray-500">
+            {new Date(event.date).toLocaleDateString("en-IN", {
+              weekday: "long",
+              day: "numeric",
+              month: "short",
+            })}{" "}
+            • {event.time}
+          </p>
+          <p className="text-xs text-gray-400">
+            Class {event.level}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
 
           {/* NOTIFICATIONS */}
           <div className="bg-white rounded-3xl p-6 shadow">
             <h3 className="font-bold mb-4">Notifications</h3>
-            <ul className="space-y-3">
-              {notifications.map((note, i) => (
-                <li
-                  key={i}
-                  className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded"
-                >
-                  {note}
-                </li>
-              ))}
-            </ul>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  No new notifications in the last 2 days.
+                </p>
+  ) : (
+    <ul className="space-y-3">
+  {notifications.map((note) => (
+    <li
+      key={note._id}
+      className={`p-3 rounded border-l-4 ${
+        note.type === "assignment"
+          ? "bg-blue-50 border-blue-400"
+          : "bg-yellow-50 border-yellow-400"
+      }`}
+    >
+      <p className="font-medium">{note.title}</p>
+      <p className="text-xs text-gray-600">
+        {note.subject}
+      </p>
+    </li>
+  ))}
+</ul>
+
+  )}
+
           </div>
         </div>
+        
 
         {/* ---------------- SUBJECT-WISE ATTENDANCE ---------------- */}
         <div className="bg-white rounded-3xl p-6 shadow mt-10">

@@ -12,16 +12,6 @@ import User from "../models/User.js";
 const router = express.Router();
 
 /* ------------------------------------------------------
-   🟦 DUMMY DATA
------------------------------------------------------- */
-const dummyStudents = [
-  { _id: "stu001", name: "Aarav Mehta", level: 1, subjects: ["Math", "Science"] },
-  { _id: "stu002", name: "Diya Sharma", level: 1, subjects: ["Math"] },
-  { _id: "stu003", name: "Karan Patel", level: 1, subjects: ["Science"] },
-  { _id: "stu004", name: "Priya Kapoor", level: 1, subjects: ["Math", "Science"] },
-];
-
-/* ------------------------------------------------------
    🟦 GET STUDENTS
 ------------------------------------------------------ */
 router.get("/students", async (req, res) => {
@@ -32,31 +22,18 @@ router.get("/students", async (req, res) => {
       return res.status(400).json({ message: "Level and subject required" });
     }
 
-    console.log("📘 Fetching students:", { level, subject });
-
     const students = await User.find({
       role: "student",
-
-      // Match ANY level inside levels[]
       levels: { $in: [Number(level)] },
-
-      // Match ANY subject inside subjects[]
-      subjects: { $in: [subject] }
+      subjects: { $in: [subject] },
     }).select("_id username levels subjects centreId");
 
-    console.log("✔ Students found:", students.length);
-
-    res.json({
-      success: true,
-      students
-    });
-
+    res.json({ success: true, students });
   } catch (err) {
     console.error("❌ Error fetching students:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 /* ------------------------------------------------------
    🟧 SAVE ATTENDANCE
@@ -65,15 +42,11 @@ router.post("/attendance", async (req, res) => {
   try {
     const { volunteerId, level, subject, date, records } = req.body;
 
-    console.log("📥 Attendance received:", req.body);
-
-    if (!volunteerId || !level || !subject || !date || !records)
+    if (!volunteerId || !level || !subject || !date || !records) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
 
-    if (!Array.isArray(records) || records.length === 0)
-      return res.status(400).json({ message: "Attendance empty" });
-
-    const newAttendance = await Attendance.create({
+    const saved = await Attendance.create({
       volunteerId,
       level,
       subject,
@@ -81,15 +54,13 @@ router.post("/attendance", async (req, res) => {
       records,
     });
 
-    console.log("✅ Attendance saved:", newAttendance._id);
     res.json({
       success: true,
       message: "Attendance saved successfully!",
-      attendanceId: newAttendance._id,
+      attendanceId: saved._id,
     });
-
   } catch (err) {
-    console.error("❌ Error saving attendance:", err);
+    console.error("❌ Attendance save error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -99,323 +70,224 @@ router.post("/attendance", async (req, res) => {
 ------------------------------------------------------ */
 router.post("/assignment", async (req, res) => {
   try {
-    console.log("📥 Received body:", req.body);
-
     const { volunteerId, level, subject, name, mcqs } = req.body;
 
-    // Validate Inputs
-    if (!volunteerId || !level || !subject || !name) {
-      return res.status(400).json({ message: "Missing required fields!" });
+    if (!volunteerId || !level || !subject || !name || !mcqs?.length) {
+      return res.status(400).json({ message: "Invalid assignment data" });
     }
 
-    if (!mcqs || !Array.isArray(mcqs) || mcqs.length === 0) {
-      return res.status(400).json({ message: "Assignment must contain at least ONE MCQ!" });
-    }
-
-    // Save Assignment
-    const newAssignment = new Assignment({
+    const saved = await Assignment.create({
       volunteerId,
       level: Number(level),
       subject,
       name,
       mcqs,
+      submissions: [], // ✅ important
       createdAt: new Date(),
     });
 
-    const saved = await newAssignment.save();
-
-    console.log("✔ Assignment saved successfully!");
-    return res.json({
+    res.json({
       success: true,
       message: "Assignment saved successfully!",
       assignment: saved,
     });
-
   } catch (err) {
-    console.log("❌ ERROR WHILE SAVING ASSIGNMENT:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to save assignment",
-    });
+    console.error("❌ Assignment save error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
-// GET ASSIGNMENT HISTORY BY VOLUNTEER
-router.get("/assignment-history/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const assignments = await Assignment.find({ volunteerId: id }).sort({ createdAt: -1 });
-
-    return res.json({ success: true, assignments });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: "Server Error" });
-  }
-});
-
 
 /* ------------------------------------------------------
-   🟩 VOLUNTEER — UPLOAD STUDY MATERIAL 
+   🟪 ASSIGNMENT HISTORY (VOLUNTEER)
 ------------------------------------------------------ */
+router.get("/assignment-history/:id", async (req, res) => {
+  try {
+    const assignments = await Assignment.find({
+      volunteerId: req.params.id,
+    }).sort({ createdAt: -1 });
 
-// make folder
+    res.json({ success: true, assignments });
+  } catch (err) {
+    console.error("❌ Assignment history error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+/* ------------------------------------------------------
+   🟩 MATERIAL UPLOAD
+------------------------------------------------------ */
 const uploadDir = path.join(process.cwd(), "uploads", "materials");
 fs.mkdirSync(uploadDir, { recursive: true });
 
-// multer config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const base = file.originalname.replace(ext, "").replace(/\s+/g, "_");
-    cb(null, `${Date.now()}_${base}${ext}`);
-  }
+  destination: (_, __, cb) => cb(null, uploadDir),
+  filename: (_, file, cb) => {
+    cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`);
+  },
 });
 
 const upload = multer({ storage });
 
 router.post("/upload-material", upload.single("file"), async (req, res) => {
   try {
-    console.log("📥 Material upload body:", req.body);
-    console.log("📄 File:", req.file);
-
-    if (!req.file)
-      return res.status(400).json({ message: "File is required" });
-
     const { volunteerId, title, description, level, subject } = req.body;
 
-    if (!volunteerId || !title || !level || !subject)
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!req.file || !volunteerId || !title || !level || !subject) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
-    const fileUrl = `http://localhost:5000/uploads/materials/${req.file.filename}`;
-
-    const savedMaterial = await Material.create({
+    const material = await Material.create({
       volunteerId,
       title,
       description,
       level: Number(level),
       subject,
-      fileUrl,
+      fileUrl: `http://localhost:5000/uploads/materials/${req.file.filename}`,
       filename: req.file.filename,
       mimeType: req.file.mimetype,
       size: req.file.size,
     });
 
-    console.log("💾 Material saved:", savedMaterial._id);
-
     res.json({
       success: true,
       message: "Material uploaded successfully!",
-      material: savedMaterial,
+      material,
     });
-
   } catch (err) {
-    console.log("❌ Error uploading material:", err);
-    res.status(500).json({ message: "Server error while uploading material" });
+    console.error("❌ Material upload error:", err);
+    res.status(500).json({ message: "Upload error" });
   }
 });
 
-
 router.get("/material-history/:volunteerId", async (req, res) => {
-  console.log("History route called with ID:", req.params.volunteerId);
+  try {
+    const materials = await Material.find({
+      volunteerId: req.params.volunteerId,
+    });
 
-  const materials = await Material.find({ volunteerId: req.params.volunteerId });
-
-  console.log("Found materials:", materials.length);
-
-  res.json({ success: true, materials });
+    res.json({ success: true, materials });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
-
-// 🟩 WEEKLY ATTENDANCE SUMMARY (WITH TOPPER + WEAK STUDENTS)
-router.get("/weekly-attendance", async (req, res) => {
+/* ------------------------------------------------------
+   🟦 VOLUNTEER NOTIFICATIONS
+------------------------------------------------------ */
+router.get("/notifications/:volunteerId", async (req, res) => {
   try {
-    const { level, subject, dates } = req.query;
+    const notifications = [];
 
-    if (!level || !subject || !dates)
-      return res.status(400).json({ message: "Missing fields" });
-
-    const weekDates = JSON.parse(dates); // array of 7 dates YYYY-MM-DD
-
-    let weekly = [];
-    let studentMap = {}; // track each student's attendance counts
-
-    // Collect daily records
-    for (let date of weekDates) {
-      const dayRecords = await Attendance.find({ level, subject, date });
-
-      let present = 0;
-      let absent = 0;
-
-      dayRecords.forEach((att) => {
-        att.records.forEach((r) => {
-          if (!studentMap[r.studentId]) {
-            studentMap[r.studentId] = {
-              name: r.name,
-              present: 0,
-              absent: 0,
-            };
-          }
-
-          if (r.status === "Present") {
-            present++;
-            studentMap[r.studentId].present++;
-          } else {
-            absent++;
-            studentMap[r.studentId].absent++;
-          }
-        });
-      });
-
-      weekly.push({ date, present, absent });
+    // ✅ Weekly report reminder (Friday)
+    if (new Date().getDay() === 5) {
+      notifications.push("📅 Please submit your weekly report today.");
     }
 
-    // ------------------------------------------------
-    //  CALCULATE TOPPER + WEAK STUDENTS
-    // ------------------------------------------------
-    let topper = null;
-    let weakStudents = [];
+    // ✅ Students submitted assignments in last 2 days
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    Object.entries(studentMap).forEach(([studentId, s]) => {
-      const total = s.present + s.absent;
-      const attendancePercent = total > 0 ? Math.round((s.present / total) * 100) : 0;
-
-      // topper = highest percentage
-      if (!topper || attendancePercent > topper.score) {
-        topper = {
-          studentId,
-          name: s.name,
-          score: attendancePercent,
-        };
-      }
-
-      // weak student: < 50% OR absent more than 3 times
-      if (attendancePercent < 50 || s.absent >= 3) {
-        weakStudents.push({
-          studentId,
-          name: s.name,
-          reason:
-            attendancePercent < 50
-              ? `Low attendance (${attendancePercent}%)`
-              : `Absent ${s.absent} days`,
-        });
-      }
+    const assignments = await Assignment.find({
+      volunteerId: req.params.volunteerId,
+      "submissions.0": { $exists: true },
+      createdAt: { $gte: twoDaysAgo },
     });
+
+    const studentSet = new Set();
+    assignments.forEach((a) =>
+      (a.submissions || []).forEach((s) => studentSet.add(s.studentId))
+    );
+
+    if (studentSet.size > 0) {
+      notifications.push(
+        `📊 ${studentSet.size} students submitted assignments in the last 2 days.`
+      );
+    }
+
+    res.json({ success: true, notifications });
+  } catch (err) {
+    console.error("❌ Volunteer notifications error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+import WeeklySchedule from "../models/WeeklySchedule.js";
+
+/* ===================== VOLUNTEER WEEKLY SCHEDULE ===================== */
+router.get("/schedule", async (req, res) => {
+  try {
+    const schedules = await WeeklySchedule.find()
+      .sort({ date: 1, time: 1 });
 
     res.json({
       success: true,
-      weekly,
-      topper,
-      weakStudents,
+      schedules
     });
-
   } catch (err) {
-    console.log("❌ Weekly Attendance Error:", err);
+    console.error("Volunteer schedule error:", err);
     res.status(500).json({ success: false });
   }
 });
 
 
-// 🟦 WEEKLY ASSIGNMENTS SUMMARY
-router.get("/weekly-assignments", async (req, res) => {
+
+// 🟦 VOLUNTEER RECENT ACTIVITY (LAST 2 DAYS ONLY)
+// ------------------------------------------------------
+router.get("/recent-activity/:volunteerId", async (req, res) => {
   try {
-    const { level, subject, dates } = req.query;
+    const { volunteerId } = req.params;
 
-    if (!level || !subject || !dates)
-      return res.status(400).json({ message: "Missing fields" });
-
-    const weekDates = JSON.parse(dates);
+    // ⏱️ last 2 days filter
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
     const assignments = await Assignment.find({
-      level,
-      subject,
-      createdAt: {
-        $gte: new Date(weekDates[0]),
-        $lte: new Date(weekDates[6])
-      }
+      volunteerId,
+      createdAt: { $gte: twoDaysAgo },
+    })
+      .sort({ createdAt: -1 })
+      .select("name createdAt");
+
+    const materials = await Material.find({
+      volunteerId,
+      createdAt: { $gte: twoDaysAgo },
+    })
+      .sort({ createdAt: -1 })
+      .select("title createdAt");
+
+    let activities = [];
+
+    assignments.forEach((a) => {
+      activities.push({
+        type: "assignment",
+        message: `📘 Published new assignment: ${a.name}`,
+        createdAt: a.createdAt,
+      });
     });
 
-    const formatted = assignments.map((a) => ({
-      name: a.name,
-      date: a.createdAt.toISOString().split("T")[0],
-    }));
+    materials.forEach((m) => {
+      activities.push({
+        type: "material",
+        message: `📁 Uploaded new material: ${m.title}`,
+        createdAt: m.createdAt,
+      });
+    });
 
-    res.json({ success: true, assignments: formatted });
+    // 🔀 sort by latest first
+    activities.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
+    res.json({
+      success: true,
+      activities,
+    });
   } catch (err) {
-    console.log("❌ Weekly Assignments Error:", err);
+    console.error("❌ Recent activity error:", err);
     res.status(500).json({ success: false });
   }
 });
 
-router.post("/weekly-report", async (req, res) => {
-  try {
-    console.log("📩 Weekly report received:", req.body);
-
-    const {
-      volunteerId,
-      level,
-      subject,
-      weekStart,
-      weekEnd,
-      reportData,
-      assignments,
-      topperStudent,
-      weakStudents,
-    } = req.body;
-
-    // Validate required fields
-    if (!volunteerId || !level || !subject || !weekStart || !weekEnd) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
-    }
-
-    // Ensure proper formatting
-    const formattedReportData = (reportData || []).map((d) => ({
-      date: d.date,
-      presentCount: d.presentCount ?? 0,
-      absentCount: d.absentCount ?? 0,
-    }));
-
-    const formattedAssignments = (assignments || []).map((a) => ({
-      name: a.name,
-      date: a.date,
-    }));
-
-    // SAVE TO MONGO
-    const saved = await WeeklyReport.create({
-      volunteerId,
-      level,
-      subject,
-      weekStart,
-      weekEnd,
-      reportData: formattedReportData,
-      assignments: formattedAssignments,
-      topperStudent: topperStudent || null,
-      weakStudents: weakStudents || [],
-    });
-
-    console.log("✅ Weekly report saved:", saved);
-
-    return res.json({
-      success: true,
-      message: "Weekly report saved successfully",
-      data: saved,
-    });
-
-  } catch (err) {
-    console.error("❌ Weekly report DB error:", err);
-
-    return res.status(500).json({
-      success: false,
-      message: "Error saving weekly report",
-      error: err.message,
-    });
-  }
-});
 
 
 export default router;

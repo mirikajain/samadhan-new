@@ -246,5 +246,130 @@ router.post("/donation/:id/photo", upload.single("photo"), async (req, res) => {
   }
 });
 
+// ======================================================
+// 📜 RECENT ACTIVITY (NO NEW MODEL)
+// ======================================================
+router.get("/recent-activity", async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const activities = [];
+
+    // 1️⃣ STUDENTS ADDED
+    const students = await User.find({
+      role: "student",
+      createdAt: { $gte: sevenDaysAgo },
+    }).select("username levels createdAt");
+
+    students.forEach((s) => {
+      activities.push({
+        message: `👧 Student added: ${s.username} (Class ${s.levels?.[0]})`,
+        createdAt: s.createdAt,
+      });
+    });
+
+    // 2️⃣ VOLUNTEERS ADDED
+    const volunteers = await User.find({
+      role: "volunteer",
+      createdAt: { $gte: sevenDaysAgo },
+    }).select("username levels createdAt");
+
+    volunteers.forEach((v) => {
+      activities.push({
+        message: `🙋 Volunteer added: ${v.username} (Class ${v.levels?.[0]})`,
+        createdAt: v.createdAt,
+      });
+    });
+
+    // 3️⃣ DONATION PHOTO UPLOADED
+    const donations = await Donation.find({
+      photoUrl: { $exists: true },
+      updatedAt: { $gte: sevenDaysAgo },
+    }).select("amount updatedAt");
+
+    donations.forEach((d) => {
+      activities.push({
+        message: `💰 Donation record updated (₹${d.amount})`,
+        createdAt: d.updatedAt,
+      });
+    });
+
+    // 4️⃣ WEEKLY REPORT SUBMITTED
+    const reports = await WeeklyReport.find({
+      createdAt: { $gte: sevenDaysAgo },
+    }).select("volunteerId level subject createdAt");
+
+    reports.forEach((r) => {
+      activities.push({
+        message: `🧾 Weekly report submitted (Class ${r.level} – ${r.subject})`,
+        createdAt: r.createdAt,
+      });
+    });
+
+    // SORT BY TIME (LATEST FIRST)
+    activities.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.json({
+      success: true,
+      activities: activities.slice(0, 10),
+    });
+
+  } catch (err) {
+    console.error("❌ Recent activity error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+import WeeklySchedule from "../models/WeeklySchedule.js";
+
+/* ======================================================
+   WEEKLY SCHEDULE (ADMIN)
+====================================================== */
+
+// ➕ Add schedule
+router.post("/schedule", async (req, res) => {
+  try {
+    const { date, level, subject, time } = req.body;
+
+    if (!date || !level || !subject || !time) {
+      return res.json({ success: false, message: "All fields required" });
+    }
+
+    const saved = await WeeklySchedule.create({
+      date,
+      level: Number(level),
+      subject,
+      time
+    });
+
+    res.json({
+      success: true,
+      message: "Schedule added successfully",
+      schedule: saved
+    });
+  } catch (err) {
+    console.error("Schedule save error", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// 📋 Get all schedules
+router.get("/schedule", async (req, res) => {
+  try {
+    const schedules = await WeeklySchedule.find().sort({
+      date: 1,
+      time: 1
+    });
+
+    res.json({ success: true, schedules });
+  } catch (err) {
+    console.error("Schedule fetch error", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 export default router;

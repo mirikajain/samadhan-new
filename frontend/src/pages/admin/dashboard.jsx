@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   ResponsiveContainer,
@@ -23,6 +23,8 @@ export default function AdminDashboard() {
 
   const [openProfile, setOpenProfile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [recentActivity, setRecentActivity] = useState([]);
+
 
   // REMOVE OLD HIGHLIGHTS
   const removeHighlights = () => {
@@ -110,18 +112,42 @@ export default function AdminDashboard() {
     { month: "Nov", students: 88, volunteers: 5 },
   ];
 
-  const notifications = [
-    "Monthly report due on 20th.",
-    "New volunteer joined: Rahul Kumar.",
-    "Stationery request from centre.",
-  ];
+  const [notifications, setNotifications] = useState([]);
 
-  const recentActivity = [
-    "Added 5 students to Class 3",
-    "Updated donation record",
-    "Exported attendance CSV",
-    "Published Weekly Schedule",
-  ];
+  useEffect(() => {
+    async function loadNotifications() {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/notifications");
+        const data = await res.json();
+
+        if (data.success) {
+          setNotifications(data.notifications);
+        }
+      } catch (err) {
+        console.error("Failed to load notifications", err);
+      }
+    }
+
+  loadNotifications();
+}, []);
+
+
+  useEffect(() => {
+  async function loadActivity() {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/admin/recent-activity"
+      );
+      const data = await res.json();
+      if (data.success) setRecentActivity(data.activities);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadActivity();
+}, []);
+
 
   const classWise = [
     { classNum: 1, students: 18, volunteers: 3, emoji: "👧" },
@@ -164,6 +190,13 @@ export default function AdminDashboard() {
             className="flex items-center gap-3 rounded-xl p-3 hover:bg-[#12263d]/60 transition"
           >
             🧾 Reports
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/schedule")}
+            className="flex items-center gap-3 rounded-xl p-3 hover:bg-[#12263d]/60 transition"
+          >
+            📅 Weekly Schedule
           </button>
 
           <button
@@ -284,24 +317,44 @@ export default function AdminDashboard() {
 
           <div className="bg-white rounded-3xl p-6 shadow">
             <h3 className="font-bold mb-4">Notifications</h3>
-            <ul className="space-y-3">
-              {notifications.map((n, i) => (
-                <li key={i} className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                  {n}
-                </li>
-              ))}
-            </ul>
+
+            {notifications.length === 0 ? (
+              <p className="text-gray-500">No new notifications</p>
+            ) : (
+              <ul className="space-y-3">
+                {notifications.map((n, i) => (
+                  <li
+                    key={i}
+                    className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded"
+                  >
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+
 
           <div className="bg-white rounded-3xl p-6 shadow">
             <h3 className="font-bold mb-4">Recent Activity</h3>
             <ul className="space-y-3">
-              {recentActivity.map((a, i) => (
-                <li key={i} className="p-3 bg-indigo-50 rounded">
-                  {a}
-                </li>
-              ))}
-            </ul>
+  {recentActivity.length === 0 ? (
+    <p className="text-gray-500">No recent activity</p>
+  ) : (
+    recentActivity.map((a, i) => (
+      <li
+        key={i}
+        className="p-3 bg-indigo-50 rounded"
+      >
+        {a.message}
+        <span className="block text-xs text-gray-400 mt-1">
+          {new Date(a.createdAt).toLocaleString()}
+        </span>
+      </li>
+    ))
+  )}
+</ul>
+
           </div>
         </div>
 

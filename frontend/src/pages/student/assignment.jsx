@@ -2,14 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 
 export default function StudentAssignment() {
-  
   const user = JSON.parse(localStorage.getItem("user"));
-  console.log("User from storage:", user);
-  console.log("Level being used:", user.levels?.[0]);
-  
   const API = "http://localhost:5000";
 
-  // READ LEVEL FROM URL (example: /student/assignment/2)
+  // READ LEVEL FROM URL
   const [, params] = useRoute("/student/assignments/:level");
   const level = params?.level || user.levels?.[0];
 
@@ -18,26 +14,27 @@ export default function StudentAssignment() {
   const [answers, setAnswers] = useState([]);
   const [result, setResult] = useState(null);
 
-  // Fetch assignments on load
+  // FETCH ASSIGNMENTS
   useEffect(() => {
     async function load() {
       try {
-        const url = `${API}/api/student/assignments/${level}`;
-        console.log("📌 Fetching assignments from:", url);
-
+        const url = `${API}/api/student/assignments/${level}?studentId=${user.id}`;
         const res = await fetch(url);
         const data = await res.json();
 
-        if (data.success) setAssignments(data.assignments);
-        else console.error("❌ Assignment fetch error:", data.message);
+        if (data.success) {
+          setAssignments(data.assignments);
+        } else {
+          alert(data.message || "Failed to load assignments");
+        }
       } catch (err) {
         console.error("❌ Cannot load assignments:", err);
       }
     }
     load();
-  }, [level]);
+  }, [level, user.id]);
 
-  // Submit assignment
+  // SUBMIT ASSIGNMENT
   const submitAssignment = async () => {
     try {
       const res = await fetch(`${API}/api/student/submit-assignment`, {
@@ -51,7 +48,15 @@ export default function StudentAssignment() {
       });
 
       const data = await res.json();
-      if (data.success) setResult(data);
+
+      if (data.success) {
+        setResult(data);
+      } else if (data.attempted) {
+        alert(data.message);
+        setSelected(null);
+      } else {
+        alert(data.message || "Submission failed");
+      }
     } catch (err) {
       console.error("❌ Error submitting assignment:", err);
     }
@@ -70,32 +75,61 @@ export default function StudentAssignment() {
             <p className="text-gray-600 text-lg">No assignments available.</p>
           )}
 
-          {assignments.map((a) => (
-            <div
-              key={a._id}
-              className="p-6 bg-white shadow rounded-xl hover:bg-pink-50 transition cursor-pointer"
-              onClick={() => {
-                setSelected(a);
-                setAnswers(Array(a.mcqs.length).fill(""));
-              }}
-            >
-              <h2 className="text-xl font-semibold text-gray-800">{a.name}</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {a.subject} • {new Date(a.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
+          {assignments.map((a) => {
+            const attempted = a.attempted === true;
+
+            return (
+              <div
+                key={a._id}
+                className={`p-6 bg-white shadow rounded-xl transition ${
+                  attempted
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:bg-pink-50 cursor-pointer"
+                }`}
+                onClick={() => {
+                  if (attempted) return;
+                  setSelected(a);
+                  setAnswers(Array(a.mcqs.length).fill(""));
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {a.name}
+                  </h2>
+
+                  {attempted && (
+                    <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                      ✔ Attempted
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-sm text-gray-600 mt-1">
+                  {a.subject} •{" "}
+                  {new Date(a.createdAt).toLocaleDateString()}
+                </p>
+
+                {attempted && (
+                  <p className="text-sm text-red-500 mt-2">
+                    You have already attempted this assignment.
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* MCQ TEST VIEW */}
+      {/* MCQ VIEW */}
       {selected && !result && (
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold mb-4">{selected.name}</h2>
 
           {selected.mcqs.map((q, i) => (
             <div key={i} className="mb-6">
-              <p className="font-semibold">{i + 1}. {q.question}</p>
+              <p className="font-semibold">
+                {i + 1}. {q.question}
+              </p>
 
               <div className="grid grid-cols-2 gap-3 mt-2">
                 {["A", "B", "C", "D"].map((opt) => (
@@ -139,29 +173,13 @@ export default function StudentAssignment() {
       {/* RESULT VIEW */}
       {result && (
         <div className="bg-white p-6 rounded-xl shadow text-center">
-          <h2 className="text-3xl font-bold text-pink-700 mb-4">🎉 Result</h2>
+          <h2 className="text-3xl font-bold text-pink-700 mb-4">
+            🎉 Result
+          </h2>
 
           <p className="text-xl font-semibold">
             Score: {result.score}/{result.total}
           </p>
-
-          {result.score === result.total && (
-            <p className="text-green-600 mt-2 font-medium">
-              Excellent! Full marks! 🌟
-            </p>
-          )}
-
-          {result.score >= result.total / 2 && result.score < result.total && (
-            <p className="text-blue-600 mt-2 font-medium">
-              Good job! Keep improving!
-            </p>
-          )}
-
-          {result.score < result.total / 2 && (
-            <p className="text-red-600 mt-2 font-medium">
-              Needs improvement — try again!
-            </p>
-          )}
 
           <button
             className="mt-6 bg-pink-500 text-white px-6 py-2 rounded-lg shadow hover:bg-pink-600"

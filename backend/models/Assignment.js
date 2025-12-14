@@ -9,13 +9,21 @@ const mcqSchema = new mongoose.Schema({
   correct: String,
 });
 
+const submissionSchema = new mongoose.Schema({
+  studentId: String,
+  studentName: String,
+  score: Number,
+  total: Number,
+  submittedAt: { type: Date, default: Date.now },
+});
+
 const assignmentSchema = new mongoose.Schema({
   volunteerId: String,
   level: Number,
   subject: String,
   name: String,
   mcqs: [mcqSchema],
-  submittedBy: String,
+  submissions: [submissionSchema], // ✅ IMPORTANT
   createdAt: { type: Date, default: Date.now },
 });
 
