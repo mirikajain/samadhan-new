@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Attendance({ user }) {
   console.log("Incoming user:", user);
@@ -30,6 +30,8 @@ export default function Attendance({ user }) {
   const [date, setDate] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+
+
 
   const API = "http://localhost:5000";
 
@@ -118,6 +120,31 @@ export default function Attendance({ user }) {
       prev.map((s) => (s._id === id ? { ...s, status } : s))
     );
   };
+
+  useEffect(() => {
+  const handleVoiceAction = (e) => {
+    if (!students.length) return;
+
+    if (e.detail === "markAllPresent") {
+      setStudents(prev =>
+        prev.map(s => ({ ...s, status: "Present" }))
+      );
+    }
+
+    if (e.detail === "markAllAbsent") {
+      setStudents(prev =>
+        prev.map(s => ({ ...s, status: "Absent" }))
+      );
+    }
+  };
+
+  window.addEventListener("attendance-action", handleVoiceAction);
+
+  return () => {
+    window.removeEventListener("attendance-action", handleVoiceAction);
+  };
+}, [students]);
+
 
   // ------------------------------
   // RETURN UI
@@ -271,7 +298,7 @@ function StudentRow({ s, handleStatusChange }) {
 
       <div>
         <p className="font-semibold text-gray-800">{s.name}</p>
-        <p className="text-xs text-gray-500">ID: {s._id}</p>
+        <p className="text-xs text-gray-500">class: {s.levels?.[0]}</p>
       </div>
 
       <div className="flex gap-2 items-center">

@@ -7,7 +7,7 @@ export default function VoiceAssistant() {
   const [listening, setListening] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role?.toLowerCase(); // "admin", "volunteer", "student", etc.
+  const role = user?.role?.toLowerCase();
 
   let recognition;
   if ("webkitSpeechRecognition" in window) {
@@ -16,16 +16,31 @@ export default function VoiceAssistant() {
     recognition.lang = "en-US";
   }
 
+  // 🎯 Attendance action keywords (NO navigation)
+  const attendanceActions = {
+    markAllPresent: [
+      "mark all present",
+      "everyone present",
+      "all students present",
+    ],
+    markAllAbsent: [
+      "mark all absent",
+      "everyone absent",
+      "all students absent",
+    ],
+  };
+
   // 1️⃣ MULTIPLE KEYWORDS for each feature
   const roleBasedKeywordGroups = {
-    report: ["report", "weekly report", "open report", "show report", "reports"],
-    dashboard: ["dashboard", "home", "main page", "go home", "open dashboard"],
+    report: ["report", "weekly report", "open report", "show report"],
+    dashboard: ["dashboard", "home", "go home", "open dashboard"],
     attendance: ["attendance", "mark attendance", "view attendance"],
-    assignment: ["assignment", "homework", "task", "open assignment"],
-    material: ["material", "resources", "study material", "open material"],
-    history: ["history", "donation history", "view history"],
-    addStudent: ["add student", "new student", "register student"],
-    addVolunteer: ["add volunteer", "new volunteer", "register volunteer"]
+    assignment: ["assignment", "homework", "task"],
+    material: ["material", "resources", "study material"],
+    history: ["history", "donation history"],
+    addStudent: ["add student", "new student"],
+    addVolunteer: ["add volunteer", "new volunteer"],
+    schedule: ["schedule", "time table"],
   };
 
   // 2️⃣ ROLE-BASED PAGES
@@ -41,49 +56,60 @@ export default function VoiceAssistant() {
       donor: "/donor/dashboard",
     },
     attendance: {
-      volunteer: "/volunteer/attendance"
+      volunteer: "/volunteer/attendance",
     },
     assignment: {
       volunteer: "/volunteer/assignment",
-      student: "/student/dashboard"
+      student: "/student/dashboard",
     },
     material: {
       volunteer: "/volunteer/material",
-      student: "/student/material"
+      student: "/student/material",
     },
     history: {
       donor: "/donor/donationHistory",
-      admin: "/admin/donationHistory"
+      admin: "/admin/donationHistory",
     },
     addStudent: {
-      admin: "/admin/addStudent"
+      admin: "/admin/addStudent",
     },
     addVolunteer: {
-      admin: "/admin/addVolunteer"
-    }
+      admin: "/admin/addVolunteer",
+    },
+    schedule: {
+      admin: "/admin/schedule",
+    },
   };
 
-  // 3️⃣ FIXED NON-ROLE COMMANDS
+  // 3️⃣ FIXED COMMANDS
   const fixedCommands = [
     { keywords: ["login", "logout"], path: "/login" },
-    { keywords: ["events", "show events"], path: "/events" }
+    { keywords: ["events", "show events"], path: "/events" },
   ];
 
-  // 4️⃣ INTELLIGENT MATCHING LOGIC
+  // 4️⃣ MATCHING LOGIC
   function findPathFromSpeech(text) {
-    text = text.toLowerCase();
+    // 🟢 Attendance actions
+    if (role === "volunteer") {
+      for (const action in attendanceActions) {
+        if (attendanceActions[action].some((p) => text.includes(p))) {
+          window.dispatchEvent(
+            new CustomEvent("attendance-action", { detail: action })
+          );
+          return "__ACTION__";
+        }
+      }
+    }
 
-    // Check multi-keyword role-based commands
+    // 🔵 Role-based navigation
     for (const key in roleBasedKeywordGroups) {
-      const triggers = roleBasedKeywordGroups[key];
-
-      if (triggers.some((phrase) => text.includes(phrase))) {
+      if (roleBasedKeywordGroups[key].some((p) => text.includes(p))) {
         const path = roleBasedPages[key]?.[role];
         if (path) return path;
       }
     }
 
-    // Check fixed commands
+    // 🔴 Fixed navigation
     for (let cmd of fixedCommands) {
       if (cmd.keywords.some((k) => text.includes(k))) {
         return cmd.path;
@@ -93,7 +119,7 @@ export default function VoiceAssistant() {
     return null;
   }
 
-  // 5️⃣ LISTENING LOGIC
+  // 5️⃣ LISTENING LOGIC (✅ FIXED)
   const startListening = () => {
     if (!recognition) return alert("Speech recognition not supported!");
 
@@ -101,10 +127,16 @@ export default function VoiceAssistant() {
     recognition.start();
 
     recognition.onresult = (e) => {
-      const text = e.results[0][0].transcript;
+      const raw = e.results?.[0]?.[0]?.transcript;
+      const text = typeof raw === "string" ? raw.toLowerCase() : "";
+
       console.log("Heard:", text);
 
+      if (!text) return;
+
       const path = findPathFromSpeech(text);
+
+      if (path === "__ACTION__") return;
 
       if (path) {
         navigate(path);
@@ -121,7 +153,7 @@ export default function VoiceAssistant() {
     setListening(false);
   };
 
-  // 6️⃣ UI — Mic Button
+  // 6️⃣ UI
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {!listening ? (
