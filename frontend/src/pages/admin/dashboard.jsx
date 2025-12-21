@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       {/* SIDEBAR */}
       <aside
         className={`
-          fixed md:static top-0 left-0 z-50 h-full w-64
+          fixed md:sticky top-0 left-0 z-50 h-screen w-64
           bg-[#013808] p-6 text-white flex flex-col rounded-r-3xl
           transform transition-transform duration-300
           ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}

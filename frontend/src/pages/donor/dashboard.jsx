@@ -166,7 +166,7 @@ const monthwiseDonationData = Object.values(donationByMonth);
       {/* ---------------- SIDEBAR ---------------- */}
       <aside
         className={`
-          fixed md:static top-0 left-0 z-50
+          fixed md:sticky top-0 left-0 z-50
           h-screen md:h-auto
           w-56
           bg-[#d55b1f] text-white p-6 flex flex-col
