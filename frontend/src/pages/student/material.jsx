@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackButton from "../../components/backButton";
 
 export default function StudentMaterial() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -29,6 +30,7 @@ export default function StudentMaterial() {
 
   return (
     <div className="min-h-screen bg-pink-100 p-6">
+      <BackButton/>
 
       <h1 className="text-3xl font-bold text-pink-700 mb-6">
         📚 Study Material — Class {level}

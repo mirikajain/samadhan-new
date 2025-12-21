@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackButton from "../../components/backButton";
 
 export default function Assignment({ user }) {
   user = {
@@ -79,12 +80,12 @@ export default function Assignment({ user }) {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-pink-50 p-6">
       <div className="bg-white shadow-xl rounded-3xl p-8 max-w-6xl mx-auto">
-
+        <BackButton/>
         <h2 className="text-4xl font-bold mb-6">Assignments ✏️</h2>
 
         {/* TABS */}

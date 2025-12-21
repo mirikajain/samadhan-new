@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackButton from "../../components/backButton";
 
 export default function Schedule() {
   const API = "http://localhost:5000/api/admin";
@@ -42,6 +43,7 @@ export default function Schedule() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
+      <BackButton/>
       <h1 className="text-3xl font-bold mb-6">📅 Weekly Schedule</h1>
 
       {/* -------- ADD FORM -------- */}

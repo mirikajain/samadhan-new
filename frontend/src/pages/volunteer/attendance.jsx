@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackButton from "../../components/backButton";
 
 export default function Attendance({ user }) {
   console.log("Incoming user:", user);
@@ -153,7 +154,7 @@ export default function Attendance({ user }) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
 
       <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl p-8 border border-blue-200 max-w-5xl mx-auto">
-
+        <BackButton/>
         <h2 className="text-3xl font-bold text-blue-700 mb-2">
           Mark Attendance
         </h2>

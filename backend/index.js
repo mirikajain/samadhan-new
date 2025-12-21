@@ -7,6 +7,7 @@ import volunteerRoutes from "./routes/volunteer.js";
 import adminRoutes from "./routes/admin.js";
 import donorRoutes from "./routes/donor.js"
 import studentRoutes from "./routes/student.js";
+import path from "path";
 
 dotenv.config();
 const app = express();
@@ -17,6 +18,8 @@ app.use(express.json());
 
 // Connect to MongoDB
 connectDB();
+
+app.use(express.static(path.join(process.cwd(), "frontend/public")));
 
 app.use("/uploads", express.static("uploads"));
 

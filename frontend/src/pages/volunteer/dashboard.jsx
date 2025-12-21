@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import heroImg from "../../assets/volunteer-hero.jpg";
 import ProfileCard from "../../components/profileCard.jsx";
+import BackButton from "../../components/backButton.jsx";
 
 export default function VolunteerDashboard() {
   const [, navigate] = useLocation();
@@ -117,18 +118,7 @@ export default function VolunteerDashboard() {
     console.error("Volunteer weekly schedule error:", err);
   }
 }
-  async function loadRecentActivity() {
-  try {
-    const res = await fetch(
-      `http://localhost:5000/api/volunteer/recent-activity/${user.id}`
-    );
-    const data = await res.json();
-    if (data.success) setRecentActivity(data.activities);
-  } catch (err) {
-    console.error("Recent activity error:", err);
-  }
-}
-
+  
 
 
   
@@ -165,7 +155,7 @@ export default function VolunteerDashboard() {
   loadRecentActivity();
   loadNotifications();
   loadWeeklySchedule();
-}, []);
+});
 
 
 
@@ -175,6 +165,9 @@ export default function VolunteerDashboard() {
 
       {/* ---------------- SIDEBAR ---------------- */}
       <aside className="w-64 bg-[#1e3161] p-6 text-white flex flex-col rounded-r-3xl">
+          
+
+          <BackButton/>
         <h1 className="text-2xl font-semibold mb-10">Prerna</h1>
 
         <nav className="space-y-5 text-md">

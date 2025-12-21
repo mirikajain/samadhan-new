@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import BackButton from "../../components/backButton";
 
 export default function ViewReport() {
   const [filters, setFilters] = useState({
@@ -20,27 +21,33 @@ export default function ViewReport() {
   const [assignments, setAssignments] = useState([]);
   const [topper, setTopper] = useState(null);
   const [weakStudents, setWeakStudents] = useState([]);
-  const [, setVolunteerId] = useState("");
+  const [volunteerName, setVolunteerName] = useState("");
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const API = "http://localhost:5000";
 
+  // -------------------------
+  // HANDLE FILTER CHANGE
+  // -------------------------
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
+  // -------------------------
+  // FETCH REPORT
+  // -------------------------
   const fetchReport = async () => {
-    if (!filters.level || !filters.subject || !filters.startDate)
+    if (!filters.level || !filters.subject || !filters.startDate) {
       return setMessage("Please fill all fields!");
+    }
 
     setLoading(true);
     setMessage("");
 
     try {
       const url = `${API}/api/admin/weekly-attendance-db?level=${filters.level}&subject=${filters.subject}&startDate=${filters.startDate}`;
-
       const res = await fetch(url);
       const data = await res.json();
 
@@ -51,10 +58,10 @@ export default function ViewReport() {
       }
 
       setWeekly(data.weekly);
-      setAssignments(data.assignments);
-      setTopper(data.topperStudent);
-      setWeakStudents(data.weakStudents);
-      setVolunteerId(data.volunteerId);
+      setAssignments(data.assignments || []);
+      setTopper(data.topperStudent || null);
+      setWeakStudents(data.weakStudents || []);
+      setVolunteerName(data.volunteerName || "");
     } catch (err) {
       console.error(err);
       setMessage("Server error");
@@ -63,6 +70,9 @@ export default function ViewReport() {
     setLoading(false);
   };
 
+  // -------------------------
+  // AVG ATTENDANCE
+  // -------------------------
   const avgAttendance =
     weekly.length > 0
       ? Math.round(
@@ -74,15 +84,22 @@ export default function ViewReport() {
 
   return (
     <div className="min-h-screen bg-green-50 p-6">
-      <div
-        id="report-section"
-        className="bg-white shadow-xl rounded-2xl p-8 border border-green-200 max-w-6xl mx-auto"
-      >
-        <h2 className="text-3xl font-bold text-green-700 mb-6">
+      <div className="bg-white shadow-xl rounded-2xl p-8 border border-green-200 max-w-6xl mx-auto">
+        
+        {/* TITLE */}
+          <BackButton/>
+        <h2 className="text-3xl font-bold text-green-700 mb-2">
           Weekly Attendance Report
         </h2>
 
-        {/* Filters */}
+        {/* VOLUNTEER NAME */}
+        {volunteerName && (
+          <p className="text-green-600 font-medium mb-6">
+            Volunteer: <span className="font-semibold">{volunteerName}</span>
+          </p>
+        )}
+
+        {/* FILTERS */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <input
             type="number"
@@ -119,10 +136,10 @@ export default function ViewReport() {
 
         {message && <p className="mt-4 text-red-600">{message}</p>}
 
-        {/* Stop if nothing */}
-        {weekly.length === 0 ? null : (
+        {/* REPORT CONTENT */}
+        {weekly.length > 0 && (
           <>
-            {/* Summary Cards */}
+            {/* SUMMARY CARDS */}
             <div className="grid md:grid-cols-4 gap-6 mt-8">
               <div className="p-5 bg-green-100 rounded-xl shadow">
                 <h3>Avg Attendance</h3>
@@ -145,9 +162,11 @@ export default function ViewReport() {
               </div>
             </div>
 
-            {/* Chart */}
+            {/* CHART */}
             <div className="mt-10">
-              <h3 className="text-xl font-bold">Weekly Attendance Chart</h3>
+              <h3 className="text-xl font-bold mb-2">
+                Weekly Attendance Chart
+              </h3>
 
               <div className="h-64 bg-white p-4 rounded-xl shadow">
                 <ResponsiveContainer width="100%" height="100%">
@@ -163,33 +182,31 @@ export default function ViewReport() {
               </div>
             </div>
 
-            {/* Daily Table */}
+            {/* DAILY TABLE */}
             <table className="w-full bg-white mt-10 border rounded-lg">
               <thead className="bg-green-100">
                 <tr>
-                  <th>Date</th>
-                  <th>Present</th>
-                  <th>Absent</th>
+                  <th className="p-2">Date</th>
+                  <th className="p-2">Present</th>
+                  <th className="p-2">Absent</th>
                 </tr>
               </thead>
-
               <tbody>
                 {weekly.map((d) => (
-                  <tr key={d.date}>
-                    <td>{d.date}</td>
-                    <td>{d.present}</td>
-                    <td>{d.absent}</td>
+                  <tr key={d.date} className="text-center border-t">
+                    <td className="p-2">{d.date}</td>
+                    <td className="p-2">{d.present}</td>
+                    <td className="p-2">{d.absent}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
-            {/* Assignments */}
+            {/* ASSIGNMENTS */}
             {assignments.length > 0 && (
               <div className="mt-10">
                 <h3 className="text-xl font-bold">Assignments</h3>
-
-                <ul>
+                <ul className="list-disc pl-6 mt-2">
                   {assignments.map((a, i) => (
                     <li key={i}>
                       <strong>{a.name}</strong> — {a.date}
@@ -199,21 +216,24 @@ export default function ViewReport() {
               </div>
             )}
 
-            {/* Topper */}
+            {/* TOPPER */}
             {topper && (
               <div className="mt-10 bg-green-100 p-4 rounded-xl">
                 <h3 className="font-bold">Topper Student</h3>
-                <p>{topper.name} — Score: {topper.score}%</p>
+                <p>
+                  {topper.name} — Score: {topper.score}%
+                </p>
               </div>
             )}
 
-            {/* Weak Students */}
+            {/* WEAK STUDENTS */}
             {weakStudents.length > 0 && (
               <div className="mt-10">
                 <h3 className="font-bold text-red-700">Weak Students</h3>
-
                 {weakStudents.map((s, i) => (
-                  <p key={i}>{s.name} — {s.reason}</p>
+                  <p key={i}>
+                    {s.name} — {s.reason}
+                  </p>
                 ))}
               </div>
             )}

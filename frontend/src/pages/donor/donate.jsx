@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackButton from "../../components/backButton";
 
 export default function Donate() {
   const user = JSON.parse(localStorage.getItem("user")) || {
@@ -86,6 +87,7 @@ export default function Donate() {
   return (
     <div className="relative">
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-orange-200">
+        <BackButton/>
         
         <h2 className="text-3xl font-bold text-[#f58a1f] mb-6 text-center">
           Make a Donation

@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import BackButton from "../../components/backButton";
 
 export default function WeeklyReport({ user }) {
   // fallback user
@@ -144,7 +145,7 @@ export default function WeeklyReport({ user }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <div className="bg-white shadow-xl rounded-2xl p-8 border border-blue-200 max-w-6xl mx-auto">
-
+          <BackButton/>
         <h2 className="text-3xl font-bold text-blue-700 mb-4">
           Weekly Report Dashboard
         </h2>

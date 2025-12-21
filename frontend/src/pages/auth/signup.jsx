@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import signupImg from "../../assets/signup-img.jpg"; // reuse same illustration
+import BackButton from "../../components/backButton";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -43,6 +44,7 @@ export default function Signup() {
       if (data.user.role === "donor") navigate("/donor/dashboard");
     } catch (error) {
       setError("Server not reachable. Please try again later.");
+      console.log(error)
     }
   };
 
@@ -52,9 +54,11 @@ export default function Signup() {
       {/* LEFT SECTION */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 md:px-20">
         {/* Logo */}
-        <h2 className="text-lg font-semibold text-purple-600 mb-2">Prerna</h2>
+        
+        <h2 className="text-lg font-semibold text-purple-600 mb-2"><br/>Prerna</h2>
 
         {/* Heading */}
+        <BackButton/>
         <h1 className="text-4xl md:text-5xl font-bold mb-3">Create</h1>
         <h1 className="text-4xl md:text-5xl font-bold mb-6">Your Account</h1>
 

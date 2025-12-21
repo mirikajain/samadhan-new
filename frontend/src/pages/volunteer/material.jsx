@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackButton from "../../components/backButton";
 
 export default function UploadMaterial({ user }) {
   // fallback user
@@ -44,7 +45,7 @@ export default function UploadMaterial({ user }) {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  });
 
   // upload material
   const uploadMaterial = async (e) => {
@@ -100,6 +101,7 @@ export default function UploadMaterial({ user }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 p-6">
       <div className="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-blue-200 max-w-4xl mx-auto">
+          <BackButton/>
 
         <h2 className="text-3xl font-extrabold text-blue-700 mb-3">
           📘 Study Material
@@ -299,7 +301,7 @@ export default function UploadMaterial({ user }) {
 // MATERIAL ROW COMPONENT
 // --------------------------------------------
 function MaterialRow({ material }) {
-  const [open, setOpen] = useState(false);
+  
 
   return (
     <>

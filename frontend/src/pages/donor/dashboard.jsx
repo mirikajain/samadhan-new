@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import heroImage from "../../assets/donation-hero.jpg";
+import BackButton from "../../components/backButton.jsx";
 
 export default function DonorDashboard() {
   const [, navigate] = useLocation();
@@ -53,7 +54,7 @@ export default function DonorDashboard() {
           setImpact(data.donations.length * 3);
         }
       });
-  }, []);
+  });
 
   // ------------------ SEARCH HIGHLIGHT FUNCTIONS ------------------
 
@@ -154,6 +155,7 @@ export default function DonorDashboard() {
 
       {/* ---------------- SIDEBAR ---------------- */}
       <aside className="w-64 bg-[#d55b1f] text-white p-6 flex flex-col rounded-r-3xl">
+        <BackButton/>
 
         <h1 className="text-2xl font-semibold mb-8">Prerna</h1>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackButton from "../../components/backButton";
 
 export default function DonationHistory() {
   const [filterType, setFilterType] = useState("");
@@ -61,6 +62,7 @@ export default function DonationHistory() {
           }
         `}
       </style>
+          <BackButton/>
 
       <h2 className="text-3xl font-bold text-green-700 mb-6">Admin Donation Report</h2>
 

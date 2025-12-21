@@ -12,6 +12,7 @@ import {
 
 import heroImg from "../../assets/volunteer-hero.jpg";
 import ProfileCard from "../../components/profileCard.jsx";
+import BackButton from "../../components/backButton.jsx";
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
@@ -161,6 +162,7 @@ export default function AdminDashboard() {
     <div className="flex min-h-screen bg-[#eef2fb]">
       {/* ---------------- LEFT SIDEBAR ---------------- */}
       <aside className="w-64 bg-[#013808] p-6 text-white flex flex-col rounded-r-3xl">
+          <BackButton/>
         <h1 className="text-2xl font-semibold mb-8">Prerna</h1>
 
         <nav className="space-y-4 text-md">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRoute } from "wouter";
+import BackButton from "../../components/backButton";
 
 export default function StudentAssignment() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -64,6 +65,7 @@ export default function StudentAssignment() {
 
   return (
     <div className="min-h-screen bg-pink-100 p-6">
+      <BackButton/>
       <h1 className="text-3xl font-bold text-pink-700 mb-6">
         Assignments for class {level}
       </h1>

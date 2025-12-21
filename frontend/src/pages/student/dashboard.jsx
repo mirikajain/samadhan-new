@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import ProfileCard from "../../components/profileCard.jsx";
+import BackButton from "../../components/backButton.jsx";
 
 export default function StudentDashboard() {
   const [, navigate] = useLocation();
@@ -107,7 +108,7 @@ export default function StudentDashboard() {
 
 
   // PERFORMANCE
-  const [weeklyReport, setWeeklyReport] = useState(null);
+  const [, setWeeklyReport] = useState(null);
 
   // LOAD ATTENDANCE + WEEKLY REPORT
   useEffect(() => {
@@ -115,7 +116,7 @@ export default function StudentDashboard() {
     loadWeeklyReport();
     loadNotifications();
     loadWeeklySchedule(); 
-  }, []);
+  });
 
   async function loadAttendance() {
     try {
@@ -204,6 +205,7 @@ export default function StudentDashboard() {
     <div className="flex min-h-screen bg-[#ffe9e9]">
       {/* ---------------- LEFT SIDEBAR ---------------- */}
       <aside className="w-64 bg-[#b83250] p-6 text-white flex flex-col rounded-r-3xl">
+        <BackButton/>
         <h1 className="text-2xl font-semibold mb-10">Prerna</h1>
 
         <nav className="space-y-5 text-md">

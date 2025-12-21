@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import BackButton from "../../components/backButton";
 
-export default function DonationHistory() {
+export default function History() {
   const user = JSON.parse(localStorage.getItem("user")) || {
     username: "Donor User",
     centreId: "N/A",
@@ -25,7 +26,7 @@ export default function DonationHistory() {
       .then((data) => {
         if (data.success) setDonations(data.donations);
       });
-  }, []);
+  });
 
   return (
     <div className="relative">
@@ -50,6 +51,7 @@ export default function DonationHistory() {
 
       {/* MAIN CARD */}
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-orange-200">
+          <BackButton/>
         <h2 className="text-3xl font-bold text-[#f58a1f] mb-6 text-center">
           Donation History
         </h2>

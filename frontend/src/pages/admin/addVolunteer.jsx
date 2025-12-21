@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BackButton from "../../components/backButton";
 
 export default function AddVolunteer() {
   const [formData, setFormData] = useState({
@@ -52,99 +53,133 @@ export default function AddVolunteer() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white p-10 rounded-2xl shadow-xl border border-green-200">
-      <h2 className="text-3xl font-bold mb-8 text-green-700 tracking-tight">
+    <div
+      className="w-full max-w-5xl mx-auto bg-white
+                 p-5 sm:p-8 md:p-10
+                 rounded-2xl shadow-xl border border-green-200"
+    >
+      {/* TITLE */}
+          <BackButton/>
+      <h2
+        className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8
+                   text-green-700 tracking-tight
+                   text-center sm:text-left"
+      >
         👤 Add Volunteer
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-
         {/* Volunteer Name */}
         <div>
-          <label className="font-semibold text-green-800">Volunteer Name</label>
+          <label className="font-semibold text-green-800 text-sm sm:text-base">
+            Volunteer Name
+          </label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full p-3 mt-1
+                       border border-green-300 rounded-xl bg-green-50
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
         </div>
 
         {/* Email */}
         <div>
-          <label className="font-semibold text-green-800">Email</label>
+          <label className="font-semibold text-green-800 text-sm sm:text-base">
+            Email
+          </label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full p-3 mt-1
+                       border border-green-300 rounded-xl bg-green-50
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
         </div>
 
         {/* Centre ID */}
         <div>
-          <label className="font-semibold text-green-800">Centre ID</label>
+          <label className="font-semibold text-green-800 text-sm sm:text-base">
+            Centre ID
+          </label>
           <input
             type="text"
             name="centreId"
             value={formData.centreId}
             onChange={handleChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full p-3 mt-1
+                       border border-green-300 rounded-xl bg-green-50
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
         </div>
 
         {/* Phone */}
         <div>
-          <label className="font-semibold text-green-800">Phone</label>
+          <label className="font-semibold text-green-800 text-sm sm:text-base">
+            Phone
+          </label>
           <input
             type="text"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full p-3 mt-1
+                       border border-green-300 rounded-xl bg-green-50
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
         </div>
 
         {/* Level */}
         <div>
-          <label className="font-semibold text-green-800">Level</label>
+          <label className="font-semibold text-green-800 text-sm sm:text-base">
+            Level
+          </label>
           <select
             name="level"
             value={formData.level}
             onChange={handleChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full p-3 mt-1
+                       border border-green-300 rounded-xl bg-green-50
+                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           >
             <option value="">Select Class</option>
             {[1, 2, 3, 4, 5].map((lvl) => (
-              <option key={lvl} value={lvl}>Level {lvl}</option>
+              <option key={lvl} value={lvl}>
+                Level {lvl}
+              </option>
             ))}
           </select>
         </div>
 
         {/* Subjects */}
         <div>
-          <label className="font-semibold text-green-800 mb-2 block">
+          <label
+            className="font-semibold text-green-800 mb-2 block
+                       text-sm sm:text-base"
+          >
             Subjects
           </label>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3
+                       gap-3 sm:gap-4 mt-3"
+          >
             {subjectsList.map((sub) => (
               <label
                 key={sub}
-                className="flex items-center gap-3 p-3 border border-green-300 rounded-xl 
-                           bg-green-50 cursor-pointer hover:bg-green-100 transition-all"
+                className="flex items-center gap-3 p-3
+                           border border-green-300 rounded-xl
+                           bg-green-50 cursor-pointer
+                           hover:bg-green-100 transition-all"
               >
                 <input
                   type="checkbox"
@@ -152,26 +187,34 @@ export default function AddVolunteer() {
                   onChange={() => toggleSubject(sub)}
                   className="w-5 h-5 accent-green-600"
                 />
-                <span className="text-green-900 font-medium">{sub}</span>
+                <span className="text-green-900 font-medium text-sm sm:text-base">
+                  {sub}
+                </span>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* BUTTON */}
         <button
           type="submit"
-          className="w-full bg-green-600 text-white py-3 rounded-xl 
-                     font-semibold text-lg hover:bg-green-700 transition-all 
-                     shadow-md hover:shadow-lg active:scale-95"
+          className="w-full bg-green-600 text-white
+                     py-3 sm:py-4 rounded-xl
+                     font-semibold text-base sm:text-lg
+                     hover:bg-green-700 transition-all
+                     shadow-md active:scale-95"
         >
           Save Volunteer
         </button>
       </form>
 
-      {/* Success Message */}
+      {/* MESSAGE */}
       {message && (
-        <p className="mt-6 text-green-700 font-bold bg-green-100 p-4 rounded-lg text-center shadow-sm">
+        <p
+          className="mt-6 text-green-700 font-semibold
+                     bg-green-100 p-4 rounded-lg
+                     text-center"
+        >
           {message}
         </p>
       )}

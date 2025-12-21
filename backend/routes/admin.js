@@ -106,7 +106,7 @@ router.post("/add-volunteer", async (req, res) => {
 
 
 // ======================================================
-// WEEKLY ATTENDANCE REPORT
+// WEEKLY ATTENDANCE REPORT (WITH VOLUNTEER NAME ✅)
 // ======================================================
 router.get("/weekly-attendance-db", async (req, res) => {
   try {
@@ -122,12 +122,11 @@ router.get("/weekly-attendance-db", async (req, res) => {
     const start = startDate.trim();
     const endDateObj = new Date(start);
     endDateObj.setDate(endDateObj.getDate() + 6);
-
     const end = endDateObj.toISOString().split("T")[0];
 
     const report = await WeeklyReport.findOne({
       level: Number(level),
-      subject: subject,
+      subject,
       weekStart: start,
       weekEnd: end,
     });
@@ -140,6 +139,13 @@ router.get("/weekly-attendance-db", async (req, res) => {
       absent: d.absentCount,
     }));
 
+    // 🔥 FETCH VOLUNTEER NAME
+    let volunteerName = "";
+    if (report.volunteerId) {
+      const volunteer = await User.findById(report.volunteerId).select("username");
+      volunteerName = volunteer?.username || "";
+    }
+
     return res.json({
       success: true,
       weekly: weeklyFormatted,
@@ -147,8 +153,9 @@ router.get("/weekly-attendance-db", async (req, res) => {
       topperStudent: report.topperStudent || null,
       weakStudents: report.weakStudents || [],
       volunteerId: report.volunteerId,
-      fullReport: report,
+      volunteerName, // ✅ SENT TO FRONTEND
     });
+
   } catch (err) {
     console.error("Weekly Report DB Error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -165,42 +172,25 @@ router.post("/filter-donations", async (req, res) => {
     let query = {};
 
     if (filterType === "date") {
-      if (!date) return res.json({ success: false, message: "Date required" });
-
       const selected = new Date(date);
       const next = new Date(selected);
       next.setDate(selected.getDate() + 1);
-
       query.date = { $gte: selected, $lt: next };
-    }
-
+    } 
     else if (filterType === "month") {
-      if (!month || !year)
-        return res.json({ success: false, message: "Month and Year required" });
-
       const start = new Date(year, month - 1, 1);
       const end = new Date(year, month, 1);
-
       query.date = { $gte: start, $lt: end };
-    }
-
+    } 
     else if (filterType === "year") {
-      if (!year)
-        return res.json({ success: false, message: "Year required" });
-
       const start = new Date(year, 0, 1);
       const end = new Date(year + 1, 0, 1);
-
       query.date = { $gte: start, $lt: end };
-    }
-
-    else {
-      return res.json({ success: false, message: "Invalid filterType" });
     }
 
     const donations = await Donation.find(query).sort({ date: -1 }).lean();
 
-    return res.json({
+    res.json({
       success: donations.length > 0,
       donations,
       totalRecords: donations.length,
@@ -208,13 +198,13 @@ router.post("/filter-donations", async (req, res) => {
 
   } catch (err) {
     console.error("Filter Error:", err);
-    return res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false });
   }
 });
 
 
 // ======================================================
-// UPLOAD PHOTO FOR DONATION  (IMPORTANT)
+// UPLOAD DONATION PHOTO
 // ======================================================
 router.post("/donation/:id/photo", upload.single("photo"), async (req, res) => {
   try {
@@ -230,11 +220,7 @@ router.post("/donation/:id/photo", upload.single("photo"), async (req, res) => {
       { new: true }
     ).lean();
 
-    if (!donation) {
-      return res.json({ success: false, message: "Donation not found" });
-    }
-
-    return res.json({
+    res.json({
       success: true,
       donation,
       message: "Photo uploaded successfully",
@@ -242,12 +228,13 @@ router.post("/donation/:id/photo", upload.single("photo"), async (req, res) => {
 
   } catch (err) {
     console.error("Upload Error:", err);
-    return res.status(500).json({ success: false, message: "Upload failed" });
+    res.status(500).json({ success: false });
   }
 });
 
+
 // ======================================================
-// 📜 RECENT ACTIVITY (NO NEW MODEL)
+// RECENT ACTIVITY
 // ======================================================
 router.get("/recent-activity", async (req, res) => {
   try {
@@ -256,61 +243,42 @@ router.get("/recent-activity", async (req, res) => {
 
     const activities = [];
 
-    // 1️⃣ STUDENTS ADDED
     const students = await User.find({
       role: "student",
       createdAt: { $gte: sevenDaysAgo },
-    }).select("username levels createdAt");
-
-    students.forEach((s) => {
-      activities.push({
-        message: `👧 Student added: ${s.username} (Class ${s.levels?.[0]})`,
-        createdAt: s.createdAt,
-      });
     });
 
-    // 2️⃣ VOLUNTEERS ADDED
+    students.forEach((s) =>
+      activities.push({
+        message: `👧 Student added: ${s.username}`,
+        createdAt: s.createdAt,
+      })
+    );
+
     const volunteers = await User.find({
       role: "volunteer",
       createdAt: { $gte: sevenDaysAgo },
-    }).select("username levels createdAt");
+    });
 
-    volunteers.forEach((v) => {
+    volunteers.forEach((v) =>
       activities.push({
-        message: `🙋 Volunteer added: ${v.username} (Class ${v.levels?.[0]})`,
+        message: `🙋 Volunteer added: ${v.username}`,
         createdAt: v.createdAt,
-      });
-    });
+      })
+    );
 
-    // 3️⃣ DONATION PHOTO UPLOADED
-    const donations = await Donation.find({
-      photoUrl: { $exists: true },
-      updatedAt: { $gte: sevenDaysAgo },
-    }).select("amount updatedAt");
-
-    donations.forEach((d) => {
-      activities.push({
-        message: `💰 Donation record updated (₹${d.amount})`,
-        createdAt: d.updatedAt,
-      });
-    });
-
-    // 4️⃣ WEEKLY REPORT SUBMITTED
     const reports = await WeeklyReport.find({
       createdAt: { $gte: sevenDaysAgo },
-    }).select("volunteerId level subject createdAt");
+    });
 
-    reports.forEach((r) => {
+    reports.forEach((r) =>
       activities.push({
         message: `🧾 Weekly report submitted (Class ${r.level} – ${r.subject})`,
         createdAt: r.createdAt,
-      });
-    });
-
-    // SORT BY TIME (LATEST FIRST)
-    activities.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      })
     );
+
+    activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json({
       success: true,
@@ -318,55 +286,106 @@ router.get("/recent-activity", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Recent activity error:", err);
+    console.error("Recent activity error:", err);
     res.status(500).json({ success: false });
   }
 });
 
+
+// ======================================================
+// WEEKLY SCHEDULE
+// ======================================================
 import WeeklySchedule from "../models/WeeklySchedule.js";
 
-/* ======================================================
-   WEEKLY SCHEDULE (ADMIN)
-====================================================== */
-
-// ➕ Add schedule
 router.post("/schedule", async (req, res) => {
   try {
     const { date, level, subject, time } = req.body;
-
-    if (!date || !level || !subject || !time) {
-      return res.json({ success: false, message: "All fields required" });
-    }
 
     const saved = await WeeklySchedule.create({
       date,
       level: Number(level),
       subject,
-      time
+      time,
     });
 
-    res.json({
-      success: true,
-      message: "Schedule added successfully",
-      schedule: saved
-    });
+    res.json({ success: true, schedule: saved });
   } catch (err) {
-    console.error("Schedule save error", err);
     res.status(500).json({ success: false });
   }
 });
 
-// 📋 Get all schedules
 router.get("/schedule", async (req, res) => {
   try {
-    const schedules = await WeeklySchedule.find().sort({
-      date: 1,
-      time: 1
-    });
-
+    const schedules = await WeeklySchedule.find().sort({ date: 1, time: 1 });
     res.json({ success: true, schedules });
   } catch (err) {
-    console.error("Schedule fetch error", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ======================================================
+// 🔔 REAL NOTIFICATIONS (FROM DB)
+// ======================================================
+router.get("/notifications", async (req, res) => {
+  try {
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    const notifications = [];
+
+    // 1️⃣ WEEKLY REPORTS SUBMITTED
+    const reports = await WeeklyReport.find({
+      createdAt: { $gte: twoDaysAgo },
+    })
+      .populate("volunteerId", "username")
+      .sort({ createdAt: -1 });
+
+    reports.forEach((r) => {
+      notifications.push({
+        message: `🧾 ${r.volunteerId?.username || "Volunteer"} submitted weekly report (Class ${r.level} – ${r.subject})`,
+        createdAt: r.createdAt,
+        type: "report",
+      });
+    });
+
+    // 2️⃣ NEW DONATIONS
+    const donations = await Donation.find({
+      createdAt: { $gte: twoDaysAgo },
+    }).sort({ createdAt: -1 });
+
+    donations.forEach((d) => {
+      notifications.push({
+        message: `💰 New donation received: ₹${d.amount}`,
+        createdAt: d.createdAt,
+        type: "donation",
+      });
+    });
+
+    // 3️⃣ NEW USERS ADDED
+    const users = await User.find({
+      createdAt: { $gte: twoDaysAgo },
+      role: { $in: ["student", "volunteer"] },
+    }).sort({ createdAt: -1 });
+
+    users.forEach((u) => {
+      notifications.push({
+        message: `👤 New ${u.role} added: ${u.username}`,
+        createdAt: u.createdAt,
+        type: "user",
+      });
+    });
+
+    // 🔥 SORT ALL TOGETHER (LATEST FIRST)
+    notifications.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.json({
+      success: true,
+      notifications: notifications.slice(0, 10),
+    });
+  } catch (err) {
+    console.error("Notifications error:", err);
     res.status(500).json({ success: false });
   }
 });

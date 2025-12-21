@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import loginImg from "../../assets/login-img.jpg";   // ✅ Correct import
+import BackButton from "../../components/backButton";
 
 export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -40,14 +41,17 @@ export default function Login() {
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
+      console.log(err);
     }
   };
 
   return (
     <div className="flex h-screen">
       
+      
       {/* LEFT SECTION */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 md:px-20">
+        <BackButton/>
         <h2 className="text-lg font-semibold text-purple-600 mb-2">Prerna</h2>
 
         <h1 className="text-5xl font-bold mb-3">Holla,</h1>

@@ -27,12 +27,21 @@ import homehero from "./assets/home-hero.jpg"
 import person1 from "./assets/person1.jpg"
 import person2 from "./assets/person2.jpg"
 import person3 from "./assets/person3.jpg"
+import DownloadAppButton from "./components/downloadButton.jsx";
+import Donate from "./pages/donor/donate.jsx";
+import History from "./pages/donor/donationHistory.jsx";
+
+
+
+
 
 export default function App() {
   const user = JSON.parse(localStorage.getItem("user"));
+  
 
   return (
     <>
+
       {/* -------------------- ANIMATION STYLES -------------------- */}
       <style>
         {`
@@ -45,6 +54,7 @@ export default function App() {
           }
         `}
       </style>
+      
 
       <Switch>
 
@@ -78,6 +88,8 @@ export default function App() {
 
         {/* DONOR ROUTES */}
         <Route path="/donor/dashboard" component={DonorDashboard} />
+        <Route path="/donor/donate" component={Donate}/>
+        <Route path="/donor/history" component={History}/>
 
         {/* STUDENT ROUTES */}
         <Route path="/student/dashboard" component={StudentDashboard} />
@@ -94,7 +106,7 @@ export default function App() {
               <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6 md:px-10">
 
                 <a href="#home" className="text-2xl font-bold text-gray-900">
-                  Prerna
+                  Prerna <br/><DownloadAppButton/>
                 </a>
 
                 <nav className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
@@ -103,6 +115,7 @@ export default function App() {
                   <a href="#about" className="hover:text-black">About</a>
                   <a href="#services" className="hover:text-black">Services</a>
                 </nav>
+                
 
                 {/* LESS-COLORFUL BUTTONS */}
                 <div className="hidden md:flex items-center gap-4">
