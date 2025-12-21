@@ -112,17 +112,21 @@ export default function Signup() {
 
           {/* Centre ID */}
           <div>
-            <input
-              type="text"
+            <select
               name="centreId"
-              placeholder="Enter your Centre ID"
               value={form.centreId}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl 
-                         focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:ring-2 focus:ring-purple-500 focus:outline-none"
               required
-            />
+            >
+              <option value="" disabled>
+                Select Centre
+              </option>
+              <option value="1">Scottish 57 centre</option>
+            </select>
           </div>
+
 
           <div>
             <select

@@ -4,7 +4,7 @@ import ProfileCard from "../../components/profileCard.jsx";
 
 import {
   PieChart, Pie, Cell,
-  BarChart, Bar,
+  LineChart, Line,
   XAxis, YAxis,
   CartesianGrid, Tooltip,
   ResponsiveContainer
@@ -22,14 +22,14 @@ export default function DonorDashboard() {
   };
 
   const [openProfile, setOpenProfile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   const [donations, setDonations] = useState([]);
   const [impact, setImpact] = useState(0);
-
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ------------------ CLOSE PROFILE DROPDOWN ------------------
+  /* ---------------- CLOSE PROFILE DROPDOWN ---------------- */
   useEffect(() => {
     const close = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -40,11 +40,11 @@ export default function DonorDashboard() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  // ------------------ FETCH DONATIONS ------------------
+  /* ---------------- FETCH DONATIONS ---------------- */
   useEffect(() => {
     fetch("https://samadhan-new-2.onrender.com/api/donor/get-donations", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ donorName: user.username }),
     })
       .then((res) => res.json())
@@ -54,26 +54,22 @@ export default function DonorDashboard() {
           setImpact(data.donations.length * 3);
         }
       });
-  });
+  }, []);
 
-  // ------------------ SEARCH HIGHLIGHT FUNCTIONS ------------------
-
-  // Remove previous highlights
+  /* ---------------- SEARCH ---------------- */
   const removeHighlights = () => {
-    const marks = document.querySelectorAll("mark.search-highlight");
-    marks.forEach((mark) => {
-      const parent = mark.parentNode;
-      parent.replaceChild(document.createTextNode(mark.textContent), mark);
-      parent.normalize();
+    document.querySelectorAll("mark.search-highlight").forEach((m) => {
+      const p = m.parentNode;
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
     });
   };
 
-  // Highlight search text
   const highlightText = (term) => {
     if (!term) return;
 
     const walker = document.createTreeWalker(
-      document.querySelector("main"), // search inside dashboard only
+      document.querySelector("main"),
       NodeFilter.SHOW_TEXT,
       null,
       false
@@ -84,24 +80,22 @@ export default function DonorDashboard() {
     while (walker.nextNode()) {
       const node = walker.currentNode;
       const text = node.nodeValue;
+      const idx = text.toLowerCase().indexOf(term.toLowerCase());
 
-      const index = text.toLowerCase().indexOf(term.toLowerCase());
-      if (index !== -1) {
-        const before = text.slice(0, index);
-        const match = text.slice(index, index + term.length);
-        const after = text.slice(index + term.length);
-
+      if (idx !== -1) {
         const mark = document.createElement("mark");
-        mark.className = "search-highlight bg-yellow-300 text-black px-1 rounded";
-        mark.appendChild(document.createTextNode(match));
+        mark.className = "search-highlight bg-yellow-300 px-1 rounded";
 
-        const beforeNode = document.createTextNode(before);
-        const afterNode = document.createTextNode(after);
+        const before = document.createTextNode(text.slice(0, idx));
+        const match = document.createTextNode(text.slice(idx, idx + term.length));
+        const after = document.createTextNode(text.slice(idx + term.length));
+
+        mark.appendChild(match);
 
         const parent = node.parentNode;
-        parent.replaceChild(afterNode, node);
-        parent.insertBefore(mark, afterNode);
-        parent.insertBefore(beforeNode, mark);
+        parent.replaceChild(after, node);
+        parent.insertBefore(mark, after);
+        parent.insertBefore(before, mark);
 
         if (!firstMatch) firstMatch = mark;
       }
@@ -114,14 +108,11 @@ export default function DonorDashboard() {
 
   const handleSearch = () => {
     removeHighlights();
-    if (!searchTerm.trim()) {
-      alert("Please enter something to search.");
-      return;
-    }
-    highlightText(searchTerm.trim());
+    if (!searchTerm.trim()) return alert("Enter something to search");
+    highlightText(searchTerm);
   };
 
-  // ------------------ COLORS FOR CHARTS ------------------
+  /* ---------------- CHART DATA ---------------- */
   const CAUSE_COLORS = {
     "Education Support": "#4B7BE5",
     "Feeding Program": "#2ECC71",
@@ -130,14 +121,34 @@ export default function DonorDashboard() {
     "Community Development": "#F1C40F",
   };
 
-  // Data group for charts
-  const monthwiseData = {};
-  donations.forEach((d) => {
-    const m = new Date(d.date).toLocaleString("default", { month: "short" });
-    if (!monthwiseData[m]) monthwiseData[m] = { month: m };
-    monthwiseData[m][d.cause] = (monthwiseData[m][d.cause] || 0) + d.amount;
+ // 1️⃣ Collect all months first
+
+
+  // ---------------- MONTH-WISE TOTAL DONATION ----------------
+const donationByMonth = {};
+
+donations.forEach((d) => {
+  if (!d.date || !d.amount) return;
+
+  const month = new Date(d.date).toLocaleString("default", {
+    month: "short",
+    year:"numeric"
   });
-  const groupedMonthData = Object.values(monthwiseData);
+
+  if (!donationByMonth[month]) {
+    donationByMonth[month] = {
+      month,
+      amount: 0,
+    };
+  }
+
+  donationByMonth[month].amount += d.amount;
+});
+
+// Final data for line chart
+const monthwiseDonationData = Object.values(donationByMonth);
+
+
 
   const totalsByCause = {};
   donations.forEach((d) => {
@@ -152,34 +163,34 @@ export default function DonorDashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#fff7ef]">
-
       {/* ---------------- SIDEBAR ---------------- */}
-      <aside className="w-64 bg-[#d55b1f] text-white p-6 flex flex-col rounded-r-3xl">
-        <BackButton/>
+      <aside
+        className={`
+          fixed md:static top-0 left-0 z-50
+          h-screen md:h-auto
+          w-56
+          bg-[#d55b1f] text-white p-6 flex flex-col
+          rounded-r-3xl
+          transform transition-transform duration-300
+          ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+        `}
+      >
+        {/* Close button (mobile only) */}
+        <button
+          className="md:hidden text-xl mb-4 self-end"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          ✕
+        </button>
 
+        <BackButton />
         <h1 className="text-2xl font-semibold mb-8">Prerna</h1>
 
-        <nav className="space-y-4 text-md">
-          <button
-            onClick={() => navigate("/donor/dashboard")}
-            className="rounded-xl p-3 w-full text-left hover:bg-[#c24f19] transition"
-          >
-            📊 Dashboard
-          </button>
-
-          <button
-            onClick={() => navigate("/donor/donate")}
-            className="rounded-xl p-3 w-full text-left hover:bg-[#c24f19] transition"
-          >
-            💝 Donate
-          </button>
-
-          <button
-            onClick={() => navigate("/donor/history")}
-            className="rounded-xl p-3 w-full text-left hover:bg-[#c24f19] transition"
-          >
-            📜 History
-          </button>
+        <nav className="space-y-4">
+          <button onClick={() => navigate("/donor/dashboard")}>📊 Dashboard</button><br/>
+          <button onClick={() => navigate("/donor/donate")}>💝 Donate</button><br/>
+          <button onClick={() => navigate("/donor/history")}>📜 History</button>
         </nav>
 
         <div className="mt-auto">
@@ -195,14 +206,28 @@ export default function DonorDashboard() {
         </div>
       </aside>
 
-      {/* ---------------- CONTENT ---------------- */}
-      <main className="flex-1 p-10">
+      {/* ---------------- OVERLAY (mobile) ---------------- */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
+      {/* ---------------- CONTENT ---------------- */}
+      <main className="flex-1 p-6 md:p-10 md:ml-27">
         {/* ---------------- TOP BAR ---------------- */}
         <div className="flex justify-between items-center mb-10">
+          {/* Hamburger */}
+          <button
+            className="md:hidden text-2xl"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            ☰
+          </button>
 
-          {/* SEARCH BAR */}
-          <div className="w-96 relative">
+          {/* Search */}
+          <div className="w-80 relative">
             <input
               placeholder="Search..."
               value={searchTerm}
@@ -210,16 +235,9 @@ export default function DonorDashboard() {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="w-full px-4 py-2 rounded-xl border shadow-sm"
             />
-
-            <span
-              className="absolute right-3 top-2.5 cursor-pointer"
-              onClick={handleSearch}
-            >
-              🔍
-            </span>
           </div>
 
-          {/* PROFILE DROPDOWN */}
+          {/* Profile */}
           <div ref={menuRef} className="relative">
             <button
               onClick={() => setOpenProfile(!openProfile)}
@@ -231,79 +249,52 @@ export default function DonorDashboard() {
             {openProfile && (
               <div className="absolute right-0 mt-4 w-72 bg-white rounded-xl shadow-xl border p-4">
                 <ProfileCard user={user} />
-                <button
-                  onClick={() => {
-                    localStorage.clear();
-                    navigate("/login");
-                  }}
-                  className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg"
-                >
-                  Logout
-                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* ---------------- HERO SECTION ---------------- */}
+        {/* ---------------- HERO ---------------- */}
         <div className="bg-white rounded-3xl p-8 shadow flex items-center gap-8">
-
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-[#d55b1f] leading-tight">
+            <h1 className="text-4xl font-bold text-[#d55b1f]">
               Welcome Back, {user.username}!
             </h1>
-            <p className="text-gray-600 mt-3 text-lg">
+            <p className="text-gray-600 mt-3">
               Your kindness is creating real impact every day ❤️
             </p>
 
             <button
               onClick={() => navigate("/donor/donate")}
-              className="mt-5 px-7 py-3 bg-[#d55b1f] text-white rounded-xl shadow hover:bg-[#b34816] font-semibold"
+              className="mt-5 px-7 py-3 bg-[#d55b1f] text-white rounded-xl shadow"
             >
               ❤️ Donate Again
             </button>
           </div>
 
-          <div className="flex-1 flex justify-center">
-            <img src={heroImage} className="w-80 rounded-xl shadow-xl" />
-          </div>
+          <img src={heroImage} className="w-72 rounded-xl shadow-xl" />
         </div>
 
         {/* ---------------- STATS ---------------- */}
         <div className="mt-10 grid md:grid-cols-3 gap-6">
-
-          <div className="p-6 bg-white rounded-xl shadow border text-center">
-            <p className="text-gray-500 text-lg">Total Donated</p>
-            <p className="text-4xl font-bold text-[#d55b1f] mt-2">
-              ₹{donations.reduce((s, d) => s + d.amount, 0)}
-            </p>
-          </div>
-
-          <div className="p-6 bg-white rounded-xl shadow border text-center">
-            <p className="text-gray-500 text-lg">Total Donations</p>
-            <p className="text-4xl font-bold text-[#d55b1f] mt-2">{donations.length}</p>
-          </div>
-
-          <div className="p-6 bg-white rounded-xl shadow border text-center">
-            <p className="text-gray-500 text-lg">Students Impacted</p>
-            <p className="text-4xl font-bold text-[#d55b1f] mt-2">{impact}</p>
-          </div>
+          <Stat title="Total Donated" value={`₹${donations.reduce((s, d) => s + d.amount, 0)}`} />
+          <Stat title="Total Donations" value={donations.length} />
+          <Stat title="Students Impacted" value={impact} />
         </div>
 
         {/* ---------------- CHARTS ---------------- */}
         <div className="grid md:grid-cols-2 gap-10 mt-12">
 
-          {/* PIE CHART */}
-          <div className="bg-white p-6 rounded-xl shadow border">
-            <h3 className="text-xl font-bold text-[#d55b1f] mb-4 text-center">
+          <div className="bg-white p-6 rounded-xl shadow">
+            <h3 className="text-lg font-semibold text-gray-800 mb-1 text-center">
               Donation Distribution by Cause
             </h3>
 
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" outerRadius={120} label>
-                  {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                <Pie data={pieData} dataKey="value" outerRadius={120}>
+                  {pieData.map((e, i) => (
+                    <Cell key={i} fill={e.color} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -311,27 +302,49 @@ export default function DonorDashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* BAR CHART */}
-          <div className="bg-white p-6 rounded-xl shadow border">
-            <h3 className="text-xl font-bold text-[#d55b1f] mb-4 text-center">
-              Monthwise Donation Comparison
-            </h3>
+          <div className="bg-white p-6 rounded-xl shadow">
+  <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
+    Month-wise Total Donation
+  </h3>
 
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={groupedMonthData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                {Object.keys(CAUSE_COLORS).map((cause, idx) => (
-                  <Bar key={idx} dataKey={cause} fill={CAUSE_COLORS[cause]} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+  {monthwiseDonationData.length === 0 ? (
+    <p className="text-center text-gray-500 mt-20">
+      No donation data available
+    </p>
+  ) : (
+    <div className="w-full h-[350px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={monthwiseDonationData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip formatter={(v) => `₹${v}`} />
+          <Line
+            type="monotone"
+            dataKey="amount"
+            stroke="#d55b1f"
+            strokeWidth={3}
+            dot={{ r: 5 }}
+            activeDot={{ r: 7 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</div>
+
         </div>
-
       </main>
+    </div>
+  );
+}
+
+/* ---------------- STAT CARD ---------------- */
+function Stat({ title, value }) {
+  return (
+    <div className="p-6 bg-white rounded-xl shadow text-center">
+      <p className="text-gray-500">{title}</p>
+      <p className="text-3xl font-bold text-[#d55b1f] mt-2">{value}</p>
     </div>
   );
 }
