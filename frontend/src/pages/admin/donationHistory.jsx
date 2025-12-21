@@ -10,7 +10,7 @@ export default function DonationHistory() {
   const [donations, setDonations] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   // -------------------------------
   // FETCH REPORT
@@ -222,7 +222,7 @@ function Row({ donation, onPhotoUpdated }) {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);

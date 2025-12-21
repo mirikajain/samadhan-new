@@ -91,7 +91,7 @@ export default function StudentDashboard() {
   async function loadWeeklySchedule() {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/student/schedule/${user.levels?.[0]}`
+      `https://samadhan-new-2.onrender.com/api/student/schedule/${user.levels?.[0]}`
     );
     const data = await res.json();
 
@@ -121,7 +121,7 @@ export default function StudentDashboard() {
   async function loadAttendance() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/student/attendance/${user.id}`
+        `https://samadhan-new-2.onrender.com/api/student/attendance/${user.id}`
       );
       const data = await res.json();
       if (data.success) {
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
   async function loadWeeklyReport() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/student/weekly-report/${user.id}`
+        `https://samadhan-new-2.onrender.com/api/student/weekly-report/${user.id}`
       );
       const data = await res.json();
 
@@ -159,7 +159,7 @@ export default function StudentDashboard() {
   async function loadNotifications() {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/student/notifications/${user.id}`
+      `https://samadhan-new-2.onrender.com/api/student/notifications/${user.id}`
     );
     const data = await res.json();
     console.log("NOTIFICATIONS API RESPONSE:", data.notifications);

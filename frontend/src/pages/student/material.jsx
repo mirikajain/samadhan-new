@@ -5,7 +5,7 @@ export default function StudentMaterial() {
   const user = JSON.parse(localStorage.getItem("user"));
   const level = user.levels?.[0]; 
   console.log(level); // correct way to access student level
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   const [materials, setMaterials] = useState([]);
 

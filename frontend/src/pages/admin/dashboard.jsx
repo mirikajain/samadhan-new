@@ -118,7 +118,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function loadNotifications() {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/notifications");
+        const res = await fetch("https://samadhan-new-2.onrender.com/api/admin/notifications");
         const data = await res.json();
 
         if (data.success) {
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
   async function loadActivity() {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/admin/recent-activity"
+        "https://samadhan-new-2.onrender.com/api/admin/recent-activity"
       );
       const data = await res.json();
       if (data.success) setRecentActivity(data.activities);

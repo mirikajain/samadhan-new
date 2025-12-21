@@ -69,7 +69,7 @@ export default function Donate() {
       date: new Date(),
     };
 
-    const res = await fetch("http://localhost:5000/api/donor/save-donation", {
+    const res = await fetch("https://samadhan-new-2.onrender.com/api/donor/save-donation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(donationData),

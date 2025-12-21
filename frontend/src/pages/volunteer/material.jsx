@@ -14,7 +14,7 @@ export default function UploadMaterial({ user }) {
         : ["Math", "Science", "English"],
   };
 
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   // Tabs
   const [activeTab, setActiveTab] = useState("upload");

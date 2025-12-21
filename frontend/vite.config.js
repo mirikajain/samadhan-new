@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:5000", // backend server URL
+        target: "https://samadhan-new-2.onrender.com", // backend server URL
         changeOrigin: true,
       },
     },

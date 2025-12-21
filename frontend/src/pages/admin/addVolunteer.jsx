@@ -31,7 +31,7 @@ export default function AddVolunteer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:5000/api/admin/add-volunteer", {
+    const res = await fetch("https://samadhan-new-2.onrender.com/api/admin/add-volunteer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),

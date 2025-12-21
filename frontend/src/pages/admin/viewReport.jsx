@@ -26,7 +26,7 @@ export default function ViewReport() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   // -------------------------
   // HANDLE FILTER CHANGE

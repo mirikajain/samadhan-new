@@ -4,7 +4,7 @@ import BackButton from "../../components/backButton";
 
 export default function StudentAssignment() {
   const user = JSON.parse(localStorage.getItem("user"));
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   // READ LEVEL FROM URL
   const [, params] = useRoute("/student/assignments/:level");

@@ -11,7 +11,7 @@ export default function Assignment({ user }) {
     subjects: user?.subjects?.length > 0 ? user.subjects : ["Math", "Science"],
   };
 
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   const [activeTab, setActiveTab] = useState("create");
   const [selectedLevel, setSelectedLevel] = useState("");

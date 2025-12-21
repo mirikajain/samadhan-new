@@ -107,7 +107,7 @@ export default function VolunteerDashboard() {
   async function loadWeeklySchedule() {
   try {
     const res = await fetch(
-      "http://localhost:5000/api/volunteer/schedule"
+      "https://samadhan-new-2.onrender.com/api/volunteer/schedule"
     );
     const data = await res.json();
 
@@ -131,7 +131,7 @@ export default function VolunteerDashboard() {
   async function loadNotifications() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/volunteer/notifications/${user.id}`
+        `https://samadhan-new-2.onrender.com/api/volunteer/notifications/${user.id}`
       );
       const data = await res.json();
       if (data.success) setNotifications(data.notifications);
@@ -143,7 +143,7 @@ export default function VolunteerDashboard() {
   async function loadRecentActivity() {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/volunteer/recent-activity/${user.id}`
+      `https://samadhan-new-2.onrender.com/api/volunteer/recent-activity/${user.id}`
     );
     const data = await res.json();
     if (data.success) setRecentActivity(data.activities);

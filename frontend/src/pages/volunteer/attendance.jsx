@@ -34,7 +34,7 @@ export default function Attendance({ user }) {
 
 
 
-  const API = "http://localhost:5000";
+  const API = "https://samadhan-new-2.onrender.com";
 
   // ------------------------------
   // Fetch Students

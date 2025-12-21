@@ -17,7 +17,7 @@ export default function History() {
 
   // Fetch donations for this donor
   useEffect(() => {
-    fetch("http://localhost:5000/api/donor/get-donations", {
+    fetch("https://samadhan-new-2.onrender.com/api/donor/get-donations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ donorName: user.username }),
