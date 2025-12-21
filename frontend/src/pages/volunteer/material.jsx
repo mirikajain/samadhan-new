@@ -14,7 +14,7 @@ export default function UploadMaterial({ user }) {
         : ["Math", "Science", "English"],
   };
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // Tabs
   const [activeTab, setActiveTab] = useState("upload");
@@ -34,7 +34,7 @@ export default function UploadMaterial({ user }) {
   // fetch uploaded material history
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`${API}/api/volunteer/material-history/${user.id}`);
+      const res = await fetch(`${API}/volunteer/material-history/${user.id}`);
       const data = await res.json();
 
       if (data.success) setMaterials(data.materials);
@@ -65,7 +65,7 @@ export default function UploadMaterial({ user }) {
     formData.append("volunteerId", user.id);
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API}/api/volunteer/upload-material`, true);
+    xhr.open("POST", `${API}/volunteer/upload-material`, true);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {

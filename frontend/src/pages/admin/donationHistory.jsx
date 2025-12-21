@@ -10,7 +10,7 @@ export default function DonationHistory() {
   const [donations, setDonations] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // -------------------------------
   // FETCH REPORT
@@ -25,7 +25,7 @@ export default function DonationHistory() {
       date,
     };
 
-    const res = await fetch(`${API}/api/admin/filter-donations`, {
+    const res = await fetch(`${API}/admin/filter-donations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -222,7 +222,7 @@ function Row({ donation, onPhotoUpdated }) {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -236,7 +236,7 @@ function Row({ donation, onPhotoUpdated }) {
       const fd = new FormData();
       fd.append("photo", selectedFile);
 
-      const res = await fetch(`${API}/api/admin/donation/${donation._id}/photo`, {
+      const res = await fetch(`${API}/admin/donation/${donation._id}/photo`, {
         method: "POST",
         body: fd,
       });

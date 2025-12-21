@@ -26,7 +26,7 @@ export default function ViewReport() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // -------------------------
   // HANDLE FILTER CHANGE
@@ -47,7 +47,7 @@ export default function ViewReport() {
     setMessage("");
 
     try {
-      const url = `${API}/api/admin/weekly-attendance-db?level=${filters.level}&subject=${filters.subject}&startDate=${filters.startDate}`;
+      const url = `${API}/admin/weekly-attendance-db?level=${filters.level}&subject=${filters.subject}&startDate=${filters.startDate}`;
       const res = await fetch(url);
       const data = await res.json();
 

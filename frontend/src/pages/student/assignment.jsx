@@ -4,7 +4,7 @@ import BackButton from "../../components/backButton";
 
 export default function StudentAssignment() {
   const user = JSON.parse(localStorage.getItem("user"));
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // READ LEVEL FROM URL
   const [, params] = useRoute("/student/assignments/:level");
@@ -19,7 +19,7 @@ export default function StudentAssignment() {
   useEffect(() => {
     async function load() {
       try {
-        const url = `${API}/api/student/assignments/${level}?studentId=${user.id}`;
+        const url = `${API}/student/assignments/${level}?studentId=${user.id}`;
         const res = await fetch(url);
         const data = await res.json();
 

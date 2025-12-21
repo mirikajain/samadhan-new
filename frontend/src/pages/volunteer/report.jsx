@@ -21,7 +21,7 @@ export default function WeeklyReport({ user }) {
       user?.subjects?.length > 0 ? user.subjects : ["Math", "Science", "English"],
   };
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // form states
   const [level, setLevel] = useState(user.level);
@@ -58,14 +58,14 @@ export default function WeeklyReport({ user }) {
 
     try {
       const aRes = await fetch(
-        `${API}/api/volunteer/weekly-attendance?level=${level}&subject=${subject}&dates=${JSON.stringify(
+        `${API}/volunteer/weekly-attendance?level=${level}&subject=${subject}&dates=${JSON.stringify(
           dates
         )}`
       );
       const attendanceData = await aRes.json();
 
       const asRes = await fetch(
-        `${API}/api/volunteer/weekly-assignments?level=${level}&subject=${subject}&dates=${JSON.stringify(
+        `${API}/volunteer/weekly-assignments?level=${level}&subject=${subject}&dates=${JSON.stringify(
           dates
         )}`
       );
@@ -110,7 +110,7 @@ export default function WeeklyReport({ user }) {
     };
 
     try {
-      const res = await fetch(`${API}/api/volunteer/weekly-report`, {
+      const res = await fetch(`${API}/volunteer/weekly-report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

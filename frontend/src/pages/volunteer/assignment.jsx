@@ -11,7 +11,7 @@ export default function Assignment({ user }) {
     subjects: user?.subjects?.length > 0 ? user.subjects : ["Math", "Science"],
   };
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   const [activeTab, setActiveTab] = useState("create");
   const [selectedLevel, setSelectedLevel] = useState("");
@@ -56,7 +56,7 @@ export default function Assignment({ user }) {
       mcqs,
     };
 
-    const res = await fetch(`${API}/api/volunteer/assignment`, {
+    const res = await fetch(`${API}/volunteer/assignment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -73,7 +73,7 @@ export default function Assignment({ user }) {
   };
 
   const fetchHistory = async () => {
-    const res = await fetch(`${API}/api/volunteer/assignment-history/${user.id}`);
+    const res = await fetch(`${API}/volunteer/assignment-history/${user.id}`);
     const data = await res.json();
     if (data.success) setHistory(data.assignments);
   };

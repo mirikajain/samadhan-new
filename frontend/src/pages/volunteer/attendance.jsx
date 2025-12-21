@@ -34,7 +34,7 @@ export default function Attendance({ user }) {
 
 
 
-  const API = "https://samadhan-new-2.onrender.com";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // ------------------------------
   // Fetch Students
@@ -46,7 +46,7 @@ export default function Attendance({ user }) {
     setLoading(true);
 
     try {
-      const url = `${API}/api/volunteer/students?level=${selectedLevel}&subject=${subject}`;
+      const url = `${API}/volunteer/students?level=${selectedLevel}&subject=${subject}`;
       console.log("Fetching:", url);
 
       const res = await fetch(url);
@@ -95,7 +95,7 @@ export default function Attendance({ user }) {
     console.log("Submitting:", payload);
 
     try {
-      const res = await fetch(`${API}/api/volunteer/attendance`, {
+      const res = await fetch(`${API}/volunteer/attendance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
