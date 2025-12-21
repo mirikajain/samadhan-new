@@ -9,6 +9,9 @@ import Material from "../models/Material.js";
 import WeeklyReport from "../models/WeeklyReport.js";
 import User from "../models/User.js";
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
+
+
 const router = express.Router();
 
 /* ------------------------------------------------------
@@ -142,7 +145,7 @@ router.post("/upload-material", upload.single("file"), async (req, res) => {
       description,
       level: Number(level),
       subject,
-      fileUrl: `http://localhost:5000/uploads/materials/${req.file.filename}`,
+      fileUrl: `${BASE_URL}/uploads/materials/${req.file.filename}`,
       filename: req.file.filename,
       mimeType: req.file.mimetype,
       size: req.file.size,
