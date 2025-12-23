@@ -68,6 +68,12 @@ router.post("/attendance", async (req, res) => {
   }
 });
 
+
+
+
+
+
+
 /* ------------------------------------------------------
    🟪 SAVE ASSIGNMENT
 ------------------------------------------------------ */
@@ -292,5 +298,203 @@ router.get("/recent-activity/:volunteerId", async (req, res) => {
 });
 
 
+router.get("/weekly-attendance", async (req, res) => {
+  try {
+    const { volunteerId, level, subject, weekStart, weekEnd } = req.query;
+
+    if (!volunteerId || !level || !subject || !weekStart || !weekEnd) {
+      return res.status(400).json({ message: "Missing query params" });
+    }
+
+    const getWeekDates = (start, end) => {
+      const dates = [];
+      let curr = new Date(start);
+      const last = new Date(end);
+      while (curr <= last) {
+        dates.push(curr.toISOString().split("T")[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      return dates;
+    };
+
+    const dateList = getWeekDates(weekStart, weekEnd);
+
+    const records = await Attendance.find({
+      volunteerId,
+      level: Number(level),
+      subject,
+      date: { $in: dateList },
+    });
+
+    // ---- SAME LOGIC AS BEFORE (aggregation) ----
+    const dailyMap = {};
+    const studentStats = {};
+
+    records.forEach((day) => {
+      if (!dailyMap[day.date]) {
+        dailyMap[day.date] = { present: 0, absent: 0 };
+      }
+
+      (day.records || []).forEach((r) => {
+        r.status === "Present"
+          ? dailyMap[day.date].present++
+          : dailyMap[day.date].absent++;
+
+        if (!studentStats[r.studentId]) {
+          studentStats[r.studentId] = {
+            name: r.name,
+            present: 0,
+            total: 0,
+          };
+        }
+
+        studentStats[r.studentId].total++;
+        if (r.status === "Present") studentStats[r.studentId].present++;
+      });
+    });
+
+    const weekly = dateList.map((d) => ({
+      date: d,
+      present: dailyMap[d]?.present || 0,
+      absent: dailyMap[d]?.absent || 0,
+    }));
+
+    let topper = null;
+    const weakStudents = [];
+
+    Object.entries(studentStats).forEach(([id, s]) => {
+      const score = Math.round((s.present / s.total) * 100);
+
+      if (!topper || score > topper.score) {
+        topper = { studentId: id, name: s.name, score };
+      }
+
+      if (score < 50) {
+        weakStudents.push({
+          studentId: id,
+          name: s.name,
+          reason: "Low attendance",
+        });
+      }
+    });
+
+    res.json({ weekly, topper, weakStudents });
+  } catch (err) {
+    console.error("❌ Weekly attendance error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+router.get("/weekly-assignments", async (req, res) => {
+  try {
+    const { volunteerId, level, subject, weekStart, weekEnd } = req.query;
+
+    if (!volunteerId || !level || !subject || !weekStart || !weekEnd) {
+      return res.status(400).json({ message: "Missing query params" });
+    }
+
+    const assignments = await Assignment.find({
+      volunteerId,
+      level: Number(level),
+      subject,
+      createdAt: {
+        $gte: new Date(weekStart),
+        $lte: new Date(weekEnd),
+      },
+    });
+
+    res.json({
+      assignments: assignments.map((a) => ({
+        name: a.name,
+        date: a.createdAt.toISOString().split("T")[0],
+      })),
+    });
+  } catch (err) {
+    console.error("❌ Weekly assignment error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/weekly-report", async (req, res) => {
+  try {
+    // ---------------- SAFETY CHECK ----------------
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body missing" });
+    }
+
+    const {
+      volunteerId,
+      level,
+      subject,
+      weekStart,
+      weekEnd,
+      reportData,
+      assignments,
+      topperStudent,
+      weakStudents,
+    } = req.body;
+
+    // ---------------- VALIDATION ----------------
+    if (
+      !volunteerId ||
+      !level ||
+      !subject ||
+      !weekStart ||
+      !weekEnd ||
+      !Array.isArray(reportData)
+    ) {
+      return res.status(400).json({
+        message: "Missing or invalid fields in weekly report",
+      });
+    }
+
+    // ---------------- PREVENT DUPLICATE REPORTS ----------------
+    const existing = await WeeklyReport.findOne({
+      volunteerId,
+      level,
+      subject,
+      weekStart,
+      weekEnd,
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        message: "Weekly report already submitted for this period",
+      });
+    }
+
+    // ---------------- SAVE REPORT ----------------
+    const report = await WeeklyReport.create({
+      volunteerId,
+      level,
+      subject,
+      weekStart,
+      weekEnd,
+
+      reportData: reportData.map((d) => ({
+        date: d.date,
+        presentCount: d.presentCount ?? 0,
+        absentCount: d.absentCount ?? 0,
+      })),
+
+      assignments: assignments || [],
+      topperStudent: topperStudent || null,
+      weakStudents: weakStudents || [],
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Weekly report submitted successfully!",
+      reportId: report._id,
+    });
+  } catch (err) {
+    console.error("❌ Weekly report error:", err);
+    res.status(500).json({
+      message: "Failed to submit weekly report",
+      error: err.message,
+    });
+  }
+});
 
 export default router;

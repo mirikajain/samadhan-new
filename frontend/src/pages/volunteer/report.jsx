@@ -21,7 +21,7 @@ export default function WeeklyReport({ user }) {
       user?.subjects?.length > 0 ? user.subjects : ["Math", "Science", "English"],
   };
 
-  const API = "https://samadhan-new-2.onrender.com/api";
+  const API = "http://localhost:5000/api";
 
   // form states
   const [level, setLevel] = useState(user.level);
@@ -57,22 +57,17 @@ export default function WeeklyReport({ user }) {
     const dates = getWeekDates(startDate);
 
     try {
-      const aRes = await fetch(
-        `${API}/volunteer/weekly-attendance?level=${level}&subject=${subject}&dates=${JSON.stringify(
-          dates
-        )}`
+      const aRes = await fetch(`${API}/volunteer/weekly-attendance?volunteerId=${user.id}&level=${level}&subject=${subject}&weekStart=${startDate}&weekEnd=${getWeekDates(startDate)[6]}`
       );
       const attendanceData = await aRes.json();
 
       const asRes = await fetch(
-        `${API}/volunteer/weekly-assignments?level=${level}&subject=${subject}&dates=${JSON.stringify(
-          dates
-        )}`
+        `${API}/volunteer/weekly-assignments?volunteerId=${user.id}&level=${level}&subject=${subject}&weekStart=${startDate}&weekEnd=${getWeekDates(startDate)[6]}`
       );
       const assignmentData = await asRes.json();
 
-      setWeeklyData(attendanceData.weekly);
-      setAssignments(assignmentData.assignments);
+      setWeeklyData(attendanceData.weekly || []);
+      setAssignments(assignmentData.assignments || []);
 
       // New fields returned from backend
       setTopperStudent(attendanceData.topper || null);
@@ -156,17 +151,17 @@ export default function WeeklyReport({ user }) {
           {/* Level */}
           <div>
             <label className="block text-sm font-medium text-blue-800 mb-1">
-              Level
+              Class
             </label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
               className="w-full border bg-blue-50 border-blue-200 rounded-lg px-3 py-2"
             >
-              <option value="">Select Level</option>
+              <option value="">Select Class</option>
               {[1, 2, 3, 4, 5].map((lvl) => (
                 <option value={lvl} key={lvl}>
-                  Level {lvl}
+                  Class {lvl}
                 </option>
               ))}
             </select>
@@ -335,9 +330,7 @@ export default function WeeklyReport({ user }) {
               <p className="text-lg font-semibold text-green-900">
                 {topperStudent.name}
               </p>
-              <p className="text-sm text-green-800 mt-1">
-                ID: <strong>{topperStudent.studentId}</strong>
-              </p>
+              
               <p className="text-sm text-green-800 mt-1">
                 Score: <strong>{topperStudent.score}%</strong>
               </p>

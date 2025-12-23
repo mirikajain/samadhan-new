@@ -235,7 +235,23 @@ export default function ViewReport() {
                     {s.name} — {s.reason}
                   </p>
                 ))}
+
+
+                <div className="flex justify-end gap-4 mt-10">
+
+            <button
+              onClick={() => window.print()}
+              className="px-6 py-2 rounded-lg bg-blue-200 text-blue-800 font-medium shadow hover:bg-blue-300"
+            >
+              ⬇️ Export as PDF
+            </button>
+
+            
+
+          </div>
               </div>
+
+              
             )}
           </>
         )}

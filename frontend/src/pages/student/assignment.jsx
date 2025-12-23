@@ -38,7 +38,7 @@ export default function StudentAssignment() {
   // SUBMIT ASSIGNMENT
   const submitAssignment = async () => {
     try {
-      const res = await fetch(`${API}/api/student/submit-assignment`, {
+      const res = await fetch(`${API}/student/submit-assignment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -75,25 +75,12 @@ export default function AddStudent() {
         </div>
 
         {/* Centre ID */}
-        <div>
-          <label className="font-semibold text-green-800 text-sm sm:text-base">
-            Centre ID
-          </label>
-          <input
-            type="text"
-            name="centreId"
-            value={formData.centreId}
-            onChange={handleInputChange}
-            className="w-full p-3 mt-1 border border-green-300 rounded-xl bg-green-50 
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          />
-        </div>
+        
 
         {/* Level */}
         <div>
           <label className="font-semibold text-green-800 text-sm sm:text-base">
-            Level
+            Class
           </label>
           <input
             type="number"

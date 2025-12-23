@@ -5,7 +5,7 @@ export default function AddVolunteer() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    centreId: "",
+    centreId: "1",
     phone: "",
     level: "",
     subjects: [],
@@ -30,21 +30,24 @@ export default function AddVolunteer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData)
 
     const res = await fetch("https://samadhan-new-2.onrender.com/api/admin/add-volunteer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+    
 
     const data = await res.json();
+    
     setMessage(data.message);
 
     if (res.ok) {
       setFormData({
         name: "",
         email: "",
-        centreId: "",
+        centreId: "1",
         phone: "",
         level: "",
         subjects: [],
@@ -104,21 +107,7 @@ export default function AddVolunteer() {
         </div>
 
         {/* Centre ID */}
-        <div>
-          <label className="font-semibold text-green-800 text-sm sm:text-base">
-            Centre ID
-          </label>
-          <input
-            type="text"
-            name="centreId"
-            value={formData.centreId}
-            onChange={handleChange}
-            className="w-full p-3 mt-1
-                       border border-green-300 rounded-xl bg-green-50
-                       focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          />
-        </div>
+        
 
         {/* Phone */}
         <div>
@@ -140,7 +129,7 @@ export default function AddVolunteer() {
         {/* Level */}
         <div>
           <label className="font-semibold text-green-800 text-sm sm:text-base">
-            Level
+            Class
           </label>
           <select
             name="level"
@@ -154,7 +143,7 @@ export default function AddVolunteer() {
             <option value="">Select Class</option>
             {[1, 2, 3, 4, 5].map((lvl) => (
               <option key={lvl} value={lvl}>
-                Level {lvl}
+                Class {lvl}
               </option>
             ))}
           </select>
