@@ -21,7 +21,7 @@ export default function WeeklyReport({ user }) {
       user?.subjects?.length > 0 ? user.subjects : ["Math", "Science", "English"],
   };
 
-  const API = "http://localhost:5000/api";
+  const API = "https://samadhan-new-2.onrender.com/api";
 
   // form states
   const [level, setLevel] = useState(user.level);
