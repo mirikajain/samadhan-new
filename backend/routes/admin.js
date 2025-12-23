@@ -78,10 +78,10 @@ router.post("/add-volunteer", async (req, res) => {
     const { name, email, centreId, phone, level, subjects } = req.body;
 
     const generatedPassword = name.toLowerCase().replace(/\s+/g, "") + "123";
-
+    const hashed = await bcrypt.hash(generatedPassword, 10);
     const volunteerUser = await User.create({
       username: name,
-      password: generatedPassword,
+      password: hashed,
       role: "volunteer",
       email,
       centreId,
